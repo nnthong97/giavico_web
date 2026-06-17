@@ -14,6 +14,7 @@ import {
   FormulationStreamEvent,
   SavedBeverageFormula,
 } from '../models/formulation.model';
+import { GIAVICO_API_DOMAINS } from './giavico-api-domains';
 
 @Injectable({
   providedIn: 'root',
@@ -21,13 +22,13 @@ import {
 export class OllamaFormulationService {
   private readonly http = inject(HttpClient);
 
-  // Default Spring Boot API endpoints from the giavico_service project
-  private readonly defaultCompleteApiUrl = 'http://localhost:18080/api/formulas/generate';
-  private readonly defaultStreamApiUrl = 'http://localhost:18080/api/formulas/generate/stream';
-  private readonly defaultFormulasApiUrl = 'http://localhost:18080/api/formulas';
-  private readonly defaultChatApiUrl = 'http://localhost:18080/api/chat';
-  private readonly defaultChatStreamApiUrl = 'http://localhost:18080/api/chat/stream';
-  private readonly defaultChatMessagesApiUrl = 'http://localhost:18080/api/chat/messages';
+  // Default microservice API endpoints.
+  private readonly defaultCompleteApiUrl = `${GIAVICO_API_DOMAINS.formula}/generate`;
+  private readonly defaultStreamApiUrl = `${GIAVICO_API_DOMAINS.formula}/generate/stream`;
+  private readonly defaultFormulasApiUrl = GIAVICO_API_DOMAINS.formula;
+  private readonly defaultChatApiUrl = GIAVICO_API_DOMAINS.chat;
+  private readonly defaultChatStreamApiUrl = `${GIAVICO_API_DOMAINS.chat}/stream`;
+  private readonly defaultChatMessagesApiUrl = `${GIAVICO_API_DOMAINS.chat}/messages`;
 
   /**
    * Generates a structured beverage formula by compiling parameters and sending the payload to Ollama.
@@ -48,7 +49,7 @@ export class OllamaFormulationService {
         try {
           return this.validateAndNormalizeFormula(response);
         } catch (error) {
-          throw new Error(`Failed to normalize giavico_service response as BeverageFormula: ${error instanceof Error ? error.message : String(error)}`);
+          throw new Error(`Failed to normalize formula-service response as BeverageFormula: ${error instanceof Error ? error.message : String(error)}`);
         }
       })
     );
@@ -164,7 +165,7 @@ export class OllamaFormulationService {
         });
 
         if (!response.ok) {
-          throw new Error(`Chat request failed with status ${response.status}.`);
+          throw await this.buildFetchError(response, 'Chat request failed');
         }
 
         if (!response.body) {
@@ -244,7 +245,7 @@ export class OllamaFormulationService {
         });
 
         if (!response.ok) {
-          throw new Error(`Ollama request failed with status ${response.status}.`);
+          throw await this.buildFetchError(response, 'Formula generation request failed');
         }
 
         if (!response.body) {
@@ -418,7 +419,7 @@ export class OllamaFormulationService {
     }
 
     if (event === 'ollama-error' || event === 'stream-parse-error') {
-      throw new Error(data || 'giavico_service returned a streaming error.');
+      throw new Error(data || 'formula-service returned a streaming error.');
     }
 
     const nextResponse = currentResponse + data;
@@ -451,7 +452,7 @@ export class OllamaFormulationService {
     }
 
     if (event === 'ollama-error' || event === 'stream-parse-error') {
-      throw new Error(data || 'giavico_service returned a chatbot streaming error.');
+      throw new Error(data || 'chat-ai-service returned a chatbot streaming error.');
     }
 
     const nextResponse = currentResponse + this.getChatChunkSeparator(currentResponse, data) + data;
@@ -490,6 +491,35 @@ export class OllamaFormulationService {
     return value.startsWith(' ') ? value.slice(1) : value;
   }
 
+  private async buildFetchError(response: Response, fallbackMessage: string): Promise<Error> {
+    const body = await response.text().catch(() => '');
+    const message = this.extractErrorMessage(body)
+      ?? body.trim()
+      ?? `${fallbackMessage} with status ${response.status}.`;
+
+    return new Error(message);
+  }
+
+  private extractErrorMessage(body: string): string | null {
+    if (!body.trim()) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(body) as { message?: unknown; error?: unknown };
+      if (typeof parsed.message === 'string' && parsed.message.trim()) {
+        return parsed.message.trim();
+      }
+      if (typeof parsed.error === 'string' && parsed.error.trim()) {
+        return parsed.error.trim();
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  }
+
   private getChatChunkSeparator(currentResponse: string, chunk: string): string {
     if (!currentResponse || !chunk || /^\s/.test(chunk) || /\s$/.test(currentResponse)) {
       return '';
@@ -516,7 +546,7 @@ export class OllamaFormulationService {
       });
       observer.complete();
     } catch (error) {
-      throw new Error(`Failed to parse streamed giavico_service response as BeverageFormula JSON: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Failed to parse streamed formula-service response as BeverageFormula JSON: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

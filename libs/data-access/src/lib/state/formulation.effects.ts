@@ -102,7 +102,7 @@ export class FormulationEffects {
       return 'Ollama request timed out (limit: 45 seconds). Check if your local Ollama instance is under heavy load.';
     }
     if (error?.status === 0) {
-      return 'Cannot connect to giavico_service. Ensure the API is running at http://localhost:18080 (check CORS settings).';
+      return 'Cannot connect to formula-service. Ensure it is running at http://localhost:8081 and CORS allows this app origin.';
     }
     if (error instanceof HttpErrorResponse && error.error?.message) {
       const fieldErrors = error.error.fieldErrors
