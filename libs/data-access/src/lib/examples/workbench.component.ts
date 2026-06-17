@@ -1534,7 +1534,7 @@ export class FormulatorWorkbenchComponent implements OnInit {
       },
       error: (error: any) => {
         this.activeMenu.set('Chatbot');
-        const errorMessage = error?.error?.message ?? error?.message ?? 'Unable to reach Ollama through giavico_service.';
+        const errorMessage = error?.error?.message ?? error?.message ?? 'Unable to reach Ollama through chat-ai-service.';
         this.updateChatMessages((messages) =>
           messages.map((chatMessage, index) =>
             index === assistantIndex
