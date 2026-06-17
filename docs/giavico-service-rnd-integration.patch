@@ -1,0 +1,96 @@
+diff --git a/pom.xml b/pom.xml
+--- a/pom.xml
++++ b/pom.xml
+@@ -21,6 +21,7 @@
+         <module>formula-service</module>
+         <module>inventory-service</module>
+         <module>chat-ai-service</module>
++        <module>rnd-document-service</module>
+     </modules>
+ 
+     <properties>
+diff --git a/gateway-service/src/main/resources/application.yml b/gateway-service/src/main/resources/application.yml
+--- a/gateway-service/src/main/resources/application.yml
++++ b/gateway-service/src/main/resources/application.yml
+@@ -13,6 +13,7 @@
+     formula-service-url: ${FORMULA_SERVICE_URL:http://localhost:8081}
+     inventory-service-url: ${INVENTORY_SERVICE_URL:http://localhost:8082}
+     chat-ai-service-url: ${CHAT_AI_SERVICE_URL:http://localhost:8083}
++    rnd-document-service-url: ${RND_DOCUMENT_SERVICE_URL:http://localhost:8084}
+ 
+ management:
+   endpoints:
+diff --git a/gateway-service/src/main/java/com/giavico/gateway/config/GatewayRouteProperties.java b/gateway-service/src/main/java/com/giavico/gateway/config/GatewayRouteProperties.java
+--- a/gateway-service/src/main/java/com/giavico/gateway/config/GatewayRouteProperties.java
++++ b/gateway-service/src/main/java/com/giavico/gateway/config/GatewayRouteProperties.java
+@@ -9,6 +9,7 @@
+ public record GatewayRouteProperties(
+         @NotBlank String formulaServiceUrl,
+         @NotBlank String inventoryServiceUrl,
+-        @NotBlank String chatAiServiceUrl
++        @NotBlank String chatAiServiceUrl,
++        @NotBlank String rndDocumentServiceUrl
+ ) {
+ }
+diff --git a/gateway-service/src/main/java/com/giavico/gateway/controller/GatewayProxyController.java b/gateway-service/src/main/java/com/giavico/gateway/controller/GatewayProxyController.java
+--- a/gateway-service/src/main/java/com/giavico/gateway/controller/GatewayProxyController.java
++++ b/gateway-service/src/main/java/com/giavico/gateway/controller/GatewayProxyController.java
+@@ -40,7 +40,7 @@
+         this.routeProperties = routeProperties;
+     }
+ 
+-    @RequestMapping({"/api/formulas/**", "/api/inventory/**", "/api/chat/**"})
++    @RequestMapping({"/api/formulas/**", "/api/inventory/**", "/api/chat/**", "/api/rnd-documents/**"})
+     public Mono<ResponseEntity<Flux<DataBuffer>>> proxy(
+             ServerWebExchange exchange,
+             @RequestBody(required = false) Mono<byte[]> requestBody
+@@ -76,5 +76,8 @@
+         if (path.startsWith("/api/chat")) {
+             return routeProperties.chatAiServiceUrl();
+         }
++        if (path.startsWith("/api/rnd-documents")) {
++            return routeProperties.rndDocumentServiceUrl();
++        }
+         throw new IllegalArgumentException("No route configured for path: " + path);
+     }
+diff --git a/docker/mysql/init/01-create-databases.sql b/docker/mysql/init/01-create-databases.sql
+--- a/docker/mysql/init/01-create-databases.sql
++++ b/docker/mysql/init/01-create-databases.sql
+@@ -1,8 +1,10 @@
+ CREATE DATABASE IF NOT EXISTS giavico_formula;
+ CREATE DATABASE IF NOT EXISTS giavico_inventory;
+ CREATE DATABASE IF NOT EXISTS giavico_chat;
++CREATE DATABASE IF NOT EXISTS giavico_rnd_documents;
+ 
+ GRANT ALL PRIVILEGES ON giavico_formula.* TO 'giavico'@'%';
+ GRANT ALL PRIVILEGES ON giavico_inventory.* TO 'giavico'@'%';
+ GRANT ALL PRIVILEGES ON giavico_chat.* TO 'giavico'@'%';
++GRANT ALL PRIVILEGES ON giavico_rnd_documents.* TO 'giavico'@'%';
+ FLUSH PRIVILEGES;
+diff --git a/docker-compose.yml b/docker-compose.yml
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -31,6 +31,23 @@
+     ports:
+       - "8088:80"
+ 
++  rnd-document-service:
++    build:
++      context: .
++      dockerfile: rnd-document-service/Dockerfile
++    container_name: giavico-rnd-document-service
++    depends_on:
++      mysql:
++        condition: service_healthy
++    environment:
++      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/giavico_rnd_documents?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
++      SPRING_DATASOURCE_USERNAME: giavico
++      SPRING_DATASOURCE_PASSWORD: giavico
++      SERVER_PORT: 8084
++      GIAVICO_CORS_ALLOWED_ORIGINS: http://localhost:4200
++    ports:
++      - "8084:8084"
++
+   beverage-formulation-engine:
+     build: .
+     container_name: giavico-beverage-formulation-engine

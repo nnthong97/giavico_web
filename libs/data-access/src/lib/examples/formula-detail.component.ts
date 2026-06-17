@@ -43,7 +43,10 @@ interface GeneratedTextSection {
             <h1>{{ savedFormula.name }}</h1>
             <p>{{ savedFormula.summary }}</p>
           </div>
-          <div class="datetime">{{ savedFormula.savedAt | date:'medium' }}</div>
+          <div class="header-meta">
+            <div class="datetime">{{ savedFormula.savedAt | date:'medium' }}</div>
+            <a class="document-link" routerLink="/documents/new" [queryParams]="{ formulaUuid: savedFormula.id, productName: savedFormula.name }">{{ t('createRndDocument') }}</a>
+          </div>
         </header>
 
         <section class="metrics">
@@ -204,6 +207,23 @@ interface GeneratedTextSection {
     }
     .datetime {
       flex-shrink: 0;
+    }
+    .header-meta {
+      align-items: flex-end;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      gap: 10px;
+    }
+    .document-link {
+      background: #0f8d91;
+      border: 1px solid #18a7ab;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 9px 12px;
+      text-decoration: none;
     }
     .eyebrow {
       color: #38bdf8;

@@ -1,0 +1,54 @@
+diff --git a/formula-service/src/main/resources/application.yml b/formula-service/src/main/resources/application.yml
+--- a/formula-service/src/main/resources/application.yml
++++ b/formula-service/src/main/resources/application.yml
+@@ -2,10 +2,10 @@ spring:
+   application:
+     name: formula-service
+   datasource:
+-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:giavico_formula;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+-    username: ${SPRING_DATASOURCE_USERNAME:sa}
+-    password: ${SPRING_DATASOURCE_PASSWORD:}
+-    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
++    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/giavico_formula?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
++    username: ${SPRING_DATASOURCE_USERNAME:giavico}
++    password: ${SPRING_DATASOURCE_PASSWORD:giavico}
++    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:com.mysql.cj.jdbc.Driver}
+   jpa:
+     hibernate:
+       ddl-auto: update
+diff --git a/inventory-service/src/main/resources/application.yml b/inventory-service/src/main/resources/application.yml
+--- a/inventory-service/src/main/resources/application.yml
++++ b/inventory-service/src/main/resources/application.yml
+@@ -2,10 +2,10 @@ spring:
+   application:
+     name: inventory-service
+   datasource:
+-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:giavico_inventory;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+-    username: ${SPRING_DATASOURCE_USERNAME:sa}
+-    password: ${SPRING_DATASOURCE_PASSWORD:}
+-    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
++    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/giavico_inventory?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
++    username: ${SPRING_DATASOURCE_USERNAME:giavico}
++    password: ${SPRING_DATASOURCE_PASSWORD:giavico}
++    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:com.mysql.cj.jdbc.Driver}
+   jpa:
+     hibernate:
+       ddl-auto: update
+diff --git a/chat-ai-service/src/main/resources/application.yml b/chat-ai-service/src/main/resources/application.yml
+--- a/chat-ai-service/src/main/resources/application.yml
++++ b/chat-ai-service/src/main/resources/application.yml
+@@ -2,10 +2,10 @@ spring:
+   application:
+     name: chat-ai-service
+   datasource:
+-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:giavico_chat;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+-    username: ${SPRING_DATASOURCE_USERNAME:sa}
+-    password: ${SPRING_DATASOURCE_PASSWORD:}
+-    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
++    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/giavico_chat?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
++    username: ${SPRING_DATASOURCE_USERNAME:giavico}
++    password: ${SPRING_DATASOURCE_PASSWORD:giavico}
++    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:com.mysql.cj.jdbc.Driver}
+   jpa:
+     hibernate:
+       ddl-auto: update
