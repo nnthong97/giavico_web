@@ -75,6 +75,10 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
               <span>FM</span>
               {{ t('formulaManagement') }}
             </button>
+            <a routerLink="/documents" class="menu-item">
+              <span>DC</span>
+              {{ t('rndDocuments') }}
+            </a>
             <button
               type="button"
               class="menu-item"

@@ -10,6 +10,11 @@ import { InventoryListComponent } from './inventory-list.component';
 import { AppLanguage, LanguageService } from '../services/language.service';
 import { ThemeService } from '../services/theme.service';
 
+import {
+  GIAVICO_CODE_SHEET_VERSION,
+  GIAVICO_INVENTORY_PRODUCTS,
+} from '../data/giavico-inventory-products';
+
 type InventoryView = 'dashboard' | 'products' | 'categories' | 'stocks' | 'expired' | 'create';
 type ProductTab = 'info' | 'pricing' | 'images';
 type StockStatus = 'inStock' | 'reorderSoon' | 'lowStock' | 'outOfStock' | 'critical';
@@ -60,6 +65,7 @@ interface InventoryTranslation {
   categoriesAtRisk: string;
   categoriesList: string;
   category: string;
+  codeSheetVersion: string;
   createdBy: string;
   createdOn: string;
   createProduct: string;
@@ -165,6 +171,7 @@ const INVENTORY_TRANSLATIONS: Record<AppLanguage, InventoryTranslation> = {
     categoriesAtRisk: 'Categories at Risk',
     categoriesList: 'Categories List',
     category: 'Category',
+    codeSheetVersion: 'Code Sheet Version',
     createdBy: 'Created by',
     createdOn: 'Created On',
     createProduct: 'Create Fruit',
@@ -268,6 +275,7 @@ const INVENTORY_TRANSLATIONS: Record<AppLanguage, InventoryTranslation> = {
     categoriesAtRisk: 'Danh mục có rủi ro',
     categoriesList: 'Danh sách danh mục',
     category: 'Danh mục',
+    codeSheetVersion: 'Phiên bản bảng mã',
     createdBy: 'Người tạo',
     createdOn: 'Ngày tạo',
     createProduct: 'Tạo trái cây',
@@ -371,6 +379,7 @@ const INVENTORY_TRANSLATIONS: Record<AppLanguage, InventoryTranslation> = {
     categoriesAtRisk: '風險分類',
     categoriesList: '分類清單',
     category: '分類',
+    codeSheetVersion: '編碼表版本',
     createdBy: '建立者',
     createdOn: '建立日期',
     createProduct: '建立水果',
@@ -463,200 +472,44 @@ const INVENTORY_TRANSLATIONS: Record<AppLanguage, InventoryTranslation> = {
   },
 };
 
-const PRODUCTS: InventoryProduct[] = [
-  {
-    name: 'Honeycrisp Apple',
-    sku: 'FR001',
-    category: 'Fresh Fruit',
-    brand: 'Orchard Select',
-    warehouse: 'CH-B01',
-    qty: 120,
-    reorderLevel: 24,
-    status: 'inStock',
-    avatar: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=96&q=80',
-    lastUpdated: 'May 12, 2019',
-    expiredDate: 'May 22, 2019',
-    manufacturedDate: 'May 12, 2019',
-  },
-  {
-    name: 'Cavendish Banana',
-    sku: 'FR005',
-    category: 'Tropical',
-    brand: 'Sunvale Farms',
-    warehouse: 'CH-B03',
-    qty: 18,
-    reorderLevel: 45,
-    status: 'critical',
-    avatar: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=96&q=80',
-    lastUpdated: 'December 2, 2018',
-    expiredDate: 'December 9, 2018',
-    manufacturedDate: 'December 2, 2018',
-  },
-  {
-    name: 'Seedless Watermelon',
-    sku: 'FR0085',
-    category: 'Melons',
-    brand: 'Green Ridge',
-    warehouse: 'CH-B04',
-    qty: 32,
-    reorderLevel: 12,
-    status: 'lowStock',
-    avatar: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=96&q=80',
-    lastUpdated: 'October 30, 2017',
-    expiredDate: 'November 6, 2017',
-    manufacturedDate: 'October 30, 2017',
-  },
-  {
-    name: 'Valencia Orange',
-    sku: 'FR0017',
-    category: 'Citrus',
-    brand: 'Citrus Grove',
-    warehouse: 'CH-B08',
-    qty: 0,
-    reorderLevel: 40,
-    status: 'outOfStock',
-    avatar: 'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=96&q=80',
-    lastUpdated: 'August 2, 2013',
-    expiredDate: 'August 12, 2013',
-    manufacturedDate: 'August 2, 2013',
-  },
-  {
-    name: 'Hass Avocado',
-    sku: 'FR0012',
-    category: 'Tropical',
-    brand: 'Vista Produce',
-    warehouse: 'CH-B06',
-    qty: 42,
-    reorderLevel: 50,
-    status: 'reorderSoon',
-    avatar: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?auto=format&fit=crop&w=96&q=80',
-    lastUpdated: 'March 23, 2013',
-    expiredDate: 'March 30, 2013',
-    manufacturedDate: 'March 23, 2013',
-  },
-  {
-    name: 'Fuji Apple',
-    sku: 'FR0019',
-    category: 'Fresh Fruit',
-    brand: 'Orchard Select',
-    warehouse: 'CH-B07',
-    qty: 27,
-    reorderLevel: 30,
-    status: 'lowStock',
-    avatar: 'https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?auto=format&fit=crop&w=96&q=80',
-    lastUpdated: 'May 20, 2015',
-    expiredDate: 'May 31, 2015',
-    manufacturedDate: 'May 20, 2015',
-  },
-  {
-    name: 'Strawberry Punnet',
-    sku: 'FR00141',
-    category: 'Berries',
-    brand: 'Berry Patch',
-    warehouse: 'CH-B07',
-    qty: 44,
-    reorderLevel: 48,
-    status: 'reorderSoon',
-    avatar: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=96&q=80',
-    lastUpdated: 'December 29, 2012',
-    expiredDate: 'January 3, 2013',
-    manufacturedDate: 'December 29, 2012',
-  },
-  {
-    name: 'Red Grapes',
-    sku: 'FR00184',
-    category: 'Fresh Fruit',
-    brand: 'Vineyard Fresh',
-    warehouse: 'CH-B07',
-    qty: 86,
-    reorderLevel: 25,
-    status: 'inStock',
-    avatar: 'https://images.unsplash.com/photo-1537640538966-79f369143f8f?auto=format&fit=crop&w=96&q=80',
-    lastUpdated: 'September 9, 2013',
-    expiredDate: 'September 18, 2013',
-    manufacturedDate: 'September 9, 2013',
-  },
-  {
-    name: 'Golden Pineapple',
-    sku: 'FR00192',
-    category: 'Tropical',
-    brand: 'Sunvale Farms',
-    warehouse: 'CH-B07',
-    qty: 10,
-    reorderLevel: 20,
-    status: 'lowStock',
-    avatar: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?auto=format&fit=crop&w=96&q=80',
-    lastUpdated: 'November 7, 2017',
-    expiredDate: 'November 17, 2017',
-    manufacturedDate: 'November 7, 2017',
-  },
-];
 
-const CATEGORIES: InventoryCategory[] = [
-  {
-    name: 'Fresh Fruit',
-    createdOn: 'October 30, 2017',
-    description: 'Core orchard and table fruits including apples, pears, grapes, and seasonal picks.',
-    createdBy: 'Wade Warren',
-    status: 'active',
-  },
-  {
-    name: 'Tropical',
-    createdOn: 'March 6, 2018',
-    description: 'Warm-climate fruits such as bananas, pineapples, mangoes, and avocados.',
-    createdBy: 'Arlene McCoy',
-    status: 'inactive',
-  },
-  {
-    name: 'Berries',
-    createdOn: 'February 29, 2012',
-    description: 'Fresh berries packed for quick turnover and cold-chain handling.',
-    createdBy: 'Guy Hawkins',
-    status: 'active',
-  },
-  {
-    name: 'Melons',
-    createdOn: 'August 7, 2017',
-    description: 'Whole and cut melon inventory for high-volume produce orders.',
-    createdBy: 'Ronald Richards',
-    status: 'inactive',
-  },
-  {
-    name: 'Citrus',
-    createdOn: 'November 7, 2017',
-    description: 'Oranges, lemons, limes, mandarins, and other citrus stock.',
-    createdBy: 'Leslie Alexander',
-    status: 'inactive',
-  },
-  {
-    name: 'Stone Fruit',
-    createdOn: 'November 28, 2015',
-    description: 'Peaches, plums, nectarines, apricots, and other delicate seasonal fruit.',
-    createdBy: 'Marvin McKinney',
-    status: 'active',
-  },
-  {
-    name: 'Organic Fruit',
-    createdOn: 'April 28, 2016',
-    description: 'Certified organic fruit lots with separate supplier tracking.',
-    createdBy: 'Dianne Russell',
-    status: 'inactive',
-  },
-  {
-    name: 'Cut Fruit',
-    createdOn: 'December 2, 2018',
-    description: 'Prepared fruit trays, cups, and ready-to-serve packs.',
-    createdBy: 'Cody Fisher',
-    status: 'active',
-  },
-  {
-    name: 'Dried Fruit',
-    createdOn: 'December 19, 2013',
-    description: 'Shelf-stable dried mango, banana chips, raisins, and mixed fruit packs.',
-    createdBy: 'Esther Howard',
-    status: 'inactive',
-  },
-];
+const PRODUCTS: InventoryProduct[] = GIAVICO_INVENTORY_PRODUCTS;
+
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  Apple: 'Apple product codes from the Giavico Vietnam code sheet, including AP, JU, RD, KQ, AE, and CJ.',
+  Banana: 'Banana inventory mapped from product code BN.',
+  Berry: 'Berry-related product codes including SB, BB, BC, RN, RP, MB, BK, and AI.',
+  Citrus: 'Citrus product codes including OL, OM, OP, OT, LE, LM, PO, and YU.',
+  Coconut: 'Coconut and coconut water codes CO, CN, and CP from the Vietnam sheet.',
+  'Functional Ingredient': 'Functional ingredient and prepared product codes from the same code sheet.',
+  Grape: 'Grape product codes GR, GW, GF, and GU.',
+  Guava: 'Guava variants from the Vietnam product code sheet, including GT, GA, and GV.',
+  'Herb & Flower': 'Herbal and floral materials such as tea herbs, flowers, and botanical inputs.',
+  Lychee: 'Lychee and longan-related product codes.',
+  Mango: 'Mango product codes such as MG and MA.',
+  Melon: 'Melon and watermelon product codes ML and WM.',
+  Nata: 'Nata product codes ND and NC, plus CP2, CP4, CP6, CP9, and CP10 variants.',
+  Other: 'Other product codes preserved from the Giavico Vietnam source sheet.',
+  Plum: 'Plum and preserved plum product codes.',
+  'Seed & Grain': 'Seed, nut, grain, and legume codes from the source sheet.',
+  'Tea & Beverage': 'Drink and infusion codes such as GP, EE, CD, IT, KB, and YO.',
+  Tropical: 'Tropical fruit codes such as PN, PY, DF, RT, MN, DR, and JF.',
+  Vegetable: 'Vegetable and plant-based ingredient codes from the source sheet.',
+};
+
+const CATEGORIES: InventoryCategory[] = Array.from(
+  new Set(PRODUCTS.map((product) => product.category))
+)
+  .sort((a, b) => a.localeCompare(b))
+  .map((name, index) => ({
+    name,
+    createdOn: 'March 11, 2024',
+    description:
+      CATEGORY_DESCRIPTIONS[name] ??
+      'Imported from Giavico Vietnam product code sheet version 67.',
+    createdBy: 'Giavico Vietnam',
+    status: index % 5 === 0 ? 'inactive' : 'active',
+  }));
 
 @Component({
   selector: 'giavico-inventory-management',
@@ -828,9 +681,9 @@ const CATEGORIES: InventoryCategory[] = [
                   <h2>{{ tr('categoriesAtRisk') }}</h2>
                   <div class="donut categories-donut"></div>
                   <div class="risk-list">
-                    <span><i class="dot purple"></i>{{ tr('electronics') }}<small>8 {{ tr('itemsLowOnStock') }}</small></span>
-                    <span><i class="dot accent"></i>Berries<small>8 {{ tr('itemsLowOnStock') }}</small></span>
-                    <span><i class="dot coral"></i>Citrus<small>4 {{ tr('outOfStock') }}</small></span>
+                    <span><i class="dot purple"></i>Citrus<small>3 {{ tr('itemsLowOnStock') }}</small></span>
+                    <span><i class="dot accent"></i>Tropical<small>4 {{ tr('itemsLowOnStock') }}</small></span>
+                    <span><i class="dot coral"></i>Apple<small>1 {{ tr('outOfStock') }}</small></span>
                   </div>
                 </article>
               </div>
@@ -842,10 +695,14 @@ const CATEGORIES: InventoryCategory[] = [
                 [cardTitle]="tr('productList')"
                 [primaryLabel]="tr('addProduct')"
                 [secondaryLabel]="tr('exportProduct')"
-                [rows]="filteredProducts()"
+                [rows]="pagedProducts()"
                 [labels]="labels()"
+                [totalItems]="filteredProducts().length"
+                [currentPage]="productsPage()"
+                [pageSize]="pageSize"
                 mode="products"
                 (primary)="setView('create')"
+                (pageChange)="setProductsPage($event)"
               ></app-inventory-list>
             </ng-container>
 
@@ -897,9 +754,13 @@ const CATEGORIES: InventoryCategory[] = [
                 [title]="tr('stocks')"
                 [cardTitle]="tr('stockList')"
                 [primaryLabel]="tr('stockAdjustment')"
-                [rows]="filteredProducts()"
+                [rows]="pagedStocks()"
                 [labels]="labels()"
+                [totalItems]="filteredProducts().length"
+                [currentPage]="stocksPage()"
+                [pageSize]="pageSize"
                 mode="stocks"
+                (pageChange)="setStocksPage($event)"
               ></app-inventory-list>
             </ng-container>
 
@@ -908,9 +769,13 @@ const CATEGORIES: InventoryCategory[] = [
                 [title]="tr('expiredStocks')"
                 [cardTitle]="tr('expiredStocksList')"
                 [primaryLabel]="tr('stockAdjustment')"
-                [rows]="filteredProducts()"
+                [rows]="pagedExpired()"
                 [labels]="labels()"
+                [totalItems]="filteredProducts().length"
+                [currentPage]="expiredPage()"
+                [pageSize]="pageSize"
                 mode="expired"
+                (pageChange)="setExpiredPage($event)"
               ></app-inventory-list>
             </ng-container>
 
@@ -1693,6 +1558,10 @@ export class InventoryManagementComponent {
   public readonly view = signal<InventoryView>('dashboard');
   public readonly productTab = signal<ProductTab>('info');
   public readonly search = signal('');
+  public readonly productsPage = signal(1);
+  public readonly stocksPage = signal(1);
+  public readonly expiredPage = signal(1);
+  public readonly pageSize = 10;
   public readonly products = PRODUCTS;
   public readonly categories = CATEGORIES;
   public readonly imageCards = [
@@ -1701,10 +1570,22 @@ export class InventoryManagementComponent {
     'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?auto=format&fit=crop&w=320&q=80',
   ];
   public readonly dashboardMetrics: InventoryMetric[] = [
-    { value: '12,480', label: 'totalProducts', caption: 'active', icon: '◈', tone: 'ok' },
-    { value: '86', label: 'lowStockItems', caption: 'reorderRecommended', icon: '◷', tone: 'ok' },
-    { value: '24', label: 'outOfStock', caption: 'critical', icon: '⊗', tone: 'warn' },
-    { value: '₹18.6L', label: 'inStockValue', caption: 'inventoryValueAtRisk', icon: '#', tone: 'danger' },
+    { value: String(PRODUCTS.length), label: 'totalProducts', caption: 'active', icon: '◈', tone: 'ok' },
+    {
+      value: String(PRODUCTS.filter((product) => ['critical', 'lowStock'].includes(product.status)).length),
+      label: 'lowStockItems',
+      caption: 'reorderRecommended',
+      icon: '◷',
+      tone: 'ok',
+    },
+    {
+      value: String(PRODUCTS.filter((product) => product.status === 'outOfStock').length),
+      label: 'outOfStock',
+      caption: 'critical',
+      icon: '⊗',
+      tone: 'warn',
+    },
+    { value: `V${GIAVICO_CODE_SHEET_VERSION}`, label: 'codeSheetVersion', caption: 'active', icon: '#', tone: 'danger' },
   ];
   public readonly movement = [
     { label: 'Jan', in: 74, out: 22 },
@@ -1720,13 +1601,10 @@ export class InventoryManagementComponent {
     { label: 'Nov', in: 62, out: 46 },
     { label: 'Dec', in: 46, out: 22 },
   ];
-  public readonly outOfStockItems = [
-    'Valencia Orange',
-    'Ataulfo Mango',
-    'Dragon Fruit',
-    'Blackberry Punnet',
-    'Kiwi Fruit',
-  ];
+  public readonly outOfStockItems = PRODUCTS
+    .filter((product) => product.status === 'outOfStock')
+    .slice(0, 5)
+    .map((product) => `${product.sku} - ${product.name}`);
   public readonly lowStockProducts = PRODUCTS.filter((product) =>
     ['lowStock', 'critical'].includes(product.status)
   );
@@ -1741,6 +1619,15 @@ export class InventoryManagementComponent {
         .some((value) => value.toLowerCase().includes(query))
     );
   });
+  public readonly pagedProducts = computed(() =>
+    this.paginate(this.filteredProducts(), this.productsPage())
+  );
+  public readonly pagedStocks = computed(() =>
+    this.paginate(this.filteredProducts(), this.stocksPage())
+  );
+  public readonly pagedExpired = computed(() =>
+    this.paginate(this.filteredProducts(), this.expiredPage())
+  );
 
   public labels(): InventoryTranslation {
     return INVENTORY_TRANSLATIONS[this.languageService.language()];
@@ -1748,6 +1635,18 @@ export class InventoryManagementComponent {
 
   public setView(view: InventoryView): void {
     this.view.set(view);
+  }
+
+  public setProductsPage(page: number): void {
+    this.productsPage.set(this.clampPage(page));
+  }
+
+  public setStocksPage(page: number): void {
+    this.stocksPage.set(this.clampPage(page));
+  }
+
+  public setExpiredPage(page: number): void {
+    this.expiredPage.set(this.clampPage(page));
   }
 
   public setLanguage(language: AppLanguage): void {
@@ -1776,5 +1675,15 @@ export class InventoryManagementComponent {
 
   public categoryStatusLabel(status: CategoryStatus): string {
     return this.tr(status);
+  }
+
+  private paginate(products: InventoryProduct[], page: number): InventoryProduct[] {
+    const start = (this.clampPage(page) - 1) * this.pageSize;
+    return products.slice(start, start + this.pageSize);
+  }
+
+  private clampPage(page: number): number {
+    const totalPages = Math.max(1, Math.ceil(this.filteredProducts().length / this.pageSize));
+    return Math.min(Math.max(1, page), totalPages);
   }
 }

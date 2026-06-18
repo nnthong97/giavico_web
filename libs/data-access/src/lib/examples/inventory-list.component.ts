@@ -152,11 +152,18 @@ const DEFAULT_LABELS: InventoryListLabels = {
           </tbody>
         </table>
         <div class="pagination">
-          1-10 of 85 {{ labels.items }}
-          <span>{{ labels.pageSize }}⌄</span>
-          <b>‹</b><span>1</span><strong>2</strong><span>3</span><span>4</span>
-          <span>5</span><span>...</span><span>50</span><b>›</b>
-          <span>{{ labels.goTo }}</span><input />
+          {{ startItem }}-{{ endItem }} of {{ totalItems }} {{ labels.items }}
+          <span>{{ pageSize }}/page</span>
+          <button type="button" [disabled]="currentPage <= 1" (click)="goToPage(currentPage - 1)">‹</button>
+          <button
+            type="button"
+            *ngFor="let page of visiblePages"
+            [class.active]="page === currentPage"
+            (click)="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+          <button type="button" [disabled]="currentPage >= totalPages" (click)="goToPage(currentPage + 1)">›</button>
         </div>
       </article>
     </section>
@@ -309,12 +316,34 @@ const DEFAULT_LABELS: InventoryListLabels = {
       gap: 16px;
       padding: 22px 26px;
     }
+<<<<<<< HEAD
     .pagination strong {
       background: #e9fbfc;
       border-radius: 6px;
       color: #08aeb8;
       padding: 8px 10px;
     }
+=======
+    .pagination button {
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      color: inherit;
+      cursor: pointer;
+      font: inherit;
+      min-width: 32px;
+      padding: 8px 10px;
+    }
+    .pagination button.active {
+      background: #e9fbfc;
+      color: #08aeb8;
+      font-weight: 800;
+    }
+    .pagination button:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+>>>>>>> 3a7fad3 (Inventory management module)
     .pagination input {
       border: 1px solid var(--line, #e8eaed);
       border-radius: 6px;
@@ -339,7 +368,41 @@ export class InventoryListComponent {
   @Input() public rows: InventoryListRow[] = [];
   @Input() public labels: InventoryListLabels = DEFAULT_LABELS;
   @Input() public mode: InventoryListMode = 'products';
+  @Input() public totalItems = 0;
+  @Input() public currentPage = 1;
+  @Input() public pageSize = 10;
   @Output() public readonly primary = new EventEmitter<void>();
+  @Output() public readonly pageChange = new EventEmitter<number>();
+
+  public get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalItems / this.pageSize));
+  }
+
+  public get startItem(): number {
+    if (this.totalItems === 0) {
+      return 0;
+    }
+
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  public get endItem(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalItems);
+  }
+
+  public get visiblePages(): number[] {
+    const start = Math.max(1, this.currentPage - 2);
+    const end = Math.min(this.totalPages, start + 4);
+    const adjustedStart = Math.max(1, end - 4);
+    return Array.from({ length: end - adjustedStart + 1 }, (_, index) => adjustedStart + index);
+  }
+
+  public goToPage(page: number): void {
+    const nextPage = Math.min(Math.max(1, page), this.totalPages);
+    if (nextPage !== this.currentPage) {
+      this.pageChange.emit(nextPage);
+    }
+  }
 
   public statusLabel(status: InventoryStockStatus): string {
     const statusMap: Record<InventoryStockStatus, keyof InventoryListLabels> = {

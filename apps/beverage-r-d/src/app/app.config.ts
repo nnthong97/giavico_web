@@ -13,10 +13,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideStore, provideState } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
 import { FORMULATION_FEATURE_KEY, formulationReducer, FormulationEffects } from '@giavico-web/data-access';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(),
+    provideAnimationsAsync(),
     provideStore(),
     provideState(FORMULATION_FEATURE_KEY, formulationReducer),
     provideEffects(FormulationEffects),
