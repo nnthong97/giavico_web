@@ -307,9 +307,9 @@ add_heading(doc, "Verification Checklist", 1)
 add_checklist_table(
     doc,
     [
-        ("TypeScript compile", "npx tsc -p apps/beverage-r-d/tsconfig.app.json --noEmit passes.", "Engineer"),
-        ("Angular template compile", "npx ngc -p apps/beverage-r-d/tsconfig.app.json --noEmit passes.", "Engineer"),
-        ("Lint", "npx nx lint beverage-r-d --skip-nx-cache passes.", "Engineer"),
+        ("TypeScript compile", "npx tsc -p apps/dashboard/tsconfig.app.json --noEmit passes.", "Engineer"),
+        ("Angular template compile", "npx ngc -p apps/dashboard/tsconfig.app.json --noEmit passes.", "Engineer"),
+        ("Lint", "npx nx lint dashboard --skip-nx-cache passes.", "Engineer"),
         ("Streaming runtime", "Live Formula Stream appears while Ollama is generating.", "Engineer"),
         ("Final formula", "Ingredients matrix and Save button render after completion.", "Engineer"),
         ("Saved item", "Saved list displays title, summary, ingredients, cost, mass percentage, datetime.", "Engineer"),
@@ -320,7 +320,7 @@ add_checklist_table(
 add_heading(doc, "Known Build Caveat", 1)
 add_body(
     doc,
-    "In the current environment, nx build beverage-r-d has repeatedly failed with an esbuild deadlock. TypeScript, Angular template compilation, linting, and browser runtime checks pass. Treat the build issue as an environment/toolchain blocker unless reproduced with a normal compiler diagnostic.",
+    "In the current environment, nx build dashboard has repeatedly failed with an esbuild deadlock. TypeScript, Angular template compilation, linting, and browser runtime checks pass. Treat the build issue as an environment/toolchain blocker unless reproduced with a normal compiler diagnostic.",
 )
 
 doc.save(OUTPUT)

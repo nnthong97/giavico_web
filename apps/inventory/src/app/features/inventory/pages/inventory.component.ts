@@ -1551,7 +1551,7 @@ const CATEGORIES: InventoryCategory[] = Array.from(
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InventoryManagementComponent {
+export class InventoryComponent {
   public readonly themeService = inject(ThemeService);
   public readonly languageService = inject(LanguageService);
 
