@@ -4,8 +4,8 @@ export const appRoutes: Route[] = [
   {
     path: '',
     loadComponent: () =>
-      import('@giavico-web/data-access').then(
-        (m) => m.InventoryManagementComponent
+      import('./features/inventory/pages/inventory-management.component').then(
+        (module) => module.InventoryManagementComponent
       ),
   },
 ];

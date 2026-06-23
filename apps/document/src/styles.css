@@ -1,0 +1,16 @@
+html,
+body {
+  min-width: 320px;
+}
+
+body {
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.mat-icon {
+  font-family: 'Material Icons';
+}

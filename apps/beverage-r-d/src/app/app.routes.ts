@@ -2,39 +2,35 @@ import { Route } from '@angular/router';
 
 export const appRoutes: Route[] = [
   {
-    path: 'qms',
-    loadChildren: () => import('./qms/qms.routes').then((m) => m.QMS_ROUTES),
-  },
-  {
     path: '',
     loadComponent: () =>
-      import('@giavico-web/data-access').then(
-        (m) => m.FormulatorWorkbenchComponent
+      import('./features/formulation/pages/workbench.component').then(
+        (module) => module.FormulatorWorkbenchComponent
       ),
   },
   {
     path: 'formulas/:id',
     loadComponent: () =>
-      import('@giavico-web/data-access').then((m) => m.FormulaDetailComponent),
+      import('./features/formulation/pages/formula-detail.component').then((module) => module.FormulaDetailComponent),
   },
   {
     path: 'documents',
     loadComponent: () =>
-      import('@giavico-web/data-access').then((m) => m.RndDocumentListComponent),
+      import('./features/rnd-documents/pages/rnd-document-list.component').then((module) => module.RndDocumentListComponent),
   },
   {
     path: 'documents/new',
     loadComponent: () =>
-      import('@giavico-web/data-access').then((m) => m.RndDocumentEditorComponent),
+      import('./features/rnd-documents/pages/rnd-document-editor.component').then((module) => module.RndDocumentEditorComponent),
   },
   {
     path: 'documents/:id/edit',
     loadComponent: () =>
-      import('@giavico-web/data-access').then((m) => m.RndDocumentEditorComponent),
+      import('./features/rnd-documents/pages/rnd-document-editor.component').then((module) => module.RndDocumentEditorComponent),
   },
   {
     path: 'documents/:id',
     loadComponent: () =>
-      import('@giavico-web/data-access').then((m) => m.RndDocumentDetailComponent),
+      import('./features/rnd-documents/pages/rnd-document-detail.component').then((module) => module.RndDocumentDetailComponent),
   },
 ];

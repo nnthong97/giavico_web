@@ -1,0 +1,59 @@
+{
+  "name": "document",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/document/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/document",
+        "browser": "apps/document/src/main.ts",
+        "tsConfig": "apps/document/tsconfig.app.json",
+        "assets": [{ "glob": "**/*", "input": "apps/document/public" }],
+        "styles": [
+          "@angular/material/prebuilt-themes/azure-blue.css",
+          "apps/document/src/app/styles/qms.scss",
+          "apps/document/src/styles.css"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            { "type": "initial", "maximumWarning": "500kb", "maximumError": "1mb" },
+            { "type": "anyComponentStyle", "maximumWarning": "24kb", "maximumError": "32kb" }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@angular/build:dev-server",
+      "configurations": {
+        "production": { "buildTarget": "document:build:production" },
+        "development": { "buildTarget": "document:build:development" }
+      },
+      "defaultConfiguration": "development"
+    },
+    "lint": { "executor": "@nx/eslint:lint" },
+    "serve-static": {
+      "continuous": true,
+      "executor": "@nx/web:file-server",
+      "options": {
+        "buildTarget": "document:build",
+        "staticFilePath": "dist/apps/document/browser",
+        "spa": true
+      }
+    }
+  }
+}
