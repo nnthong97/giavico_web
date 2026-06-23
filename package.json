@@ -2,7 +2,12 @@
   "name": "@giavico-web/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "ci:lint": "nx run-many -t lint --all",
+    "ci:build": "nx run-many -t build --all --configuration=production",
+    "ci:build:deploy": "nx build beverage-r-d --configuration=production --base-href=/beverage-r-d/ && nx build document --configuration=production --base-href=/document/ && nx build inventory-management --configuration=production --base-href=/inventory-management/",
+    "ci": "npm run ci:lint && npm run ci:build"
+  },
   "private": true,
   "dependencies": {
     "@angular-devkit/build-angular": "~21.2.0",

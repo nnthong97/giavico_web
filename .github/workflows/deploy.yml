@@ -1,0 +1,90 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build production bundle
+    runs-on: ubuntu-latest
+    env:
+      NX_DAEMON: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run ci:lint
+
+      - name: Build
+        run: npm run ci:build:deploy
+
+      - name: Prepare static deploy bundle
+        run: |
+          mkdir -p deploy
+          cp -R dist/apps/beverage-r-d/browser deploy/beverage-r-d
+          cp -R dist/apps/document/browser deploy/document
+          cp -R dist/apps/inventory-management/browser deploy/inventory-management
+
+      - name: Upload deploy bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: giavico-web-deploy
+          path: deploy
+          if-no-files-found: error
+          retention-days: 14
+
+  deploy:
+    name: Deploy to server
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+    steps:
+      - name: Download deploy bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: giavico-web-deploy
+          path: deploy
+
+      - name: Configure SSH
+        if: ${{ env.SSH_HOST != '' && env.SSH_USER != '' && env.SSH_PRIVATE_KEY != '' && env.DEPLOY_PATH != '' }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${SSH_PORT:-22}" "$SSH_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sync files
+        if: ${{ env.SSH_HOST != '' && env.SSH_USER != '' && env.SSH_PRIVATE_KEY != '' && env.DEPLOY_PATH != '' }}
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key -p ${SSH_PORT:-22}" deploy/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
+
+      - name: Deployment not configured
+        if: ${{ env.SSH_HOST == '' || env.SSH_USER == '' || env.SSH_PRIVATE_KEY == '' || env.DEPLOY_PATH == '' }}
+        run: |
+          echo "Production deployment secrets are not configured. Build artifact giavico-web-deploy is available for manual deployment."
