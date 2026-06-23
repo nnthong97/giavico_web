@@ -554,7 +554,7 @@ export class OllamaFormulationService {
    * Constructs a system prompt establishing the AI role, expected constraints, and output format.
    */
   private constructSystemPrompt(): string {
-    return `You are an expert Beverage R&D Food Scientist and Industrial Formulation Engineer (Giavico Specs).
+    return `You are an expert Dashboard Food Scientist and Industrial Formulation Engineer (Giavico Specs).
 Your task is to generate a structured beverage recipe formulation (JSON format) that satisfies user-defined targets and operational constraints.
 
 You MUST follow these strict food science and formulation constraints:

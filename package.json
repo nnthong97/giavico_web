@@ -5,7 +5,7 @@
   "scripts": {
     "ci:lint": "nx run-many -t lint --all",
     "ci:build": "nx run-many -t build --all --configuration=production",
-    "ci:build:deploy": "nx build beverage-r-d --configuration=production --base-href=/beverage-r-d/ && nx build document --configuration=production --base-href=/document/ && nx build inventory-management --configuration=production --base-href=/inventory-management/",
+    "ci:build:deploy": "nx build dashboard --configuration=production --base-href=/dashboard/ && nx build document --configuration=production --base-href=/document/ && nx build inventory --configuration=production --base-href=/inventory/",
     "ci": "npm run ci:lint && npm run ci:build"
   },
   "private": true,

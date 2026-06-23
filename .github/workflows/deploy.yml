@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - release
 
 permissions:
   contents: read
@@ -41,9 +41,9 @@ jobs:
       - name: Prepare static deploy bundle
         run: |
           mkdir -p deploy
-          cp -R dist/apps/beverage-r-d/browser deploy/beverage-r-d
+          cp -R dist/apps/dashboard/browser deploy/dashboard
           cp -R dist/apps/document/browser deploy/document
-          cp -R dist/apps/inventory-management/browser deploy/inventory-management
+          cp -R dist/apps/inventory/browser deploy/inventory
 
       - name: Upload deploy bundle
         uses: actions/upload-artifact@v4

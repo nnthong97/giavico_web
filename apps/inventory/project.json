@@ -1,25 +1,25 @@
 {
-  "name": "inventory-management",
+  "name": "inventory",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "app",
-  "sourceRoot": "apps/inventory-management/src",
+  "sourceRoot": "apps/inventory/src",
   "tags": [],
   "targets": {
     "build": {
       "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/inventory-management",
-        "browser": "apps/inventory-management/src/main.ts",
-        "tsConfig": "apps/inventory-management/tsconfig.app.json",
+        "outputPath": "dist/apps/inventory",
+        "browser": "apps/inventory/src/main.ts",
+        "tsConfig": "apps/inventory/tsconfig.app.json",
         "assets": [
           {
             "glob": "**/*",
-            "input": "apps/inventory-management/public"
+            "input": "apps/inventory/public"
           }
         ],
-        "styles": ["apps/inventory-management/src/styles.css"]
+        "styles": ["apps/inventory/src/styles.css"]
       },
       "configurations": {
         "production": {
@@ -50,10 +50,10 @@
       "executor": "@angular/build:dev-server",
       "configurations": {
         "production": {
-          "buildTarget": "inventory-management:build:production"
+          "buildTarget": "inventory:build:production"
         },
         "development": {
-          "buildTarget": "inventory-management:build:development"
+          "buildTarget": "inventory:build:development"
         }
       },
       "defaultConfiguration": "development"
@@ -65,8 +65,8 @@
       "continuous": true,
       "executor": "@nx/web:file-server",
       "options": {
-        "buildTarget": "inventory-management:build",
-        "staticFilePath": "dist/apps/inventory-management/browser",
+        "buildTarget": "inventory:build",
+        "staticFilePath": "dist/apps/inventory/browser",
         "spa": true
       }
     }

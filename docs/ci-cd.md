@@ -19,11 +19,11 @@ The deploy workflow runs on pushes to `main` and can also be started manually fr
 
 The workflow builds all three Angular apps and prepares this static bundle:
 
-- `beverage-r-d`
+- `dashboard`
 - `document`
-- `inventory-management`
+- `inventory`
 
-Deployment builds use folder-specific base paths, so the apps are expected to be served from `/beverage-r-d/`, `/document/`, and `/inventory-management/`.
+Deployment builds use folder-specific base paths, so the apps are expected to be served from `/dashboard/`, `/document/`, and `/inventory/`.
 
 To enable automatic SSH deployment, configure these repository or environment secrets:
 
@@ -42,9 +42,9 @@ Each app is a single-page application. The web server should route unknown paths
 Example Nginx routing:
 
 ```nginx
-location /beverage-r-d/ {
-  alias /var/www/giavico-web/beverage-r-d/;
-  try_files $uri $uri/ /beverage-r-d/index.html;
+location /dashboard/ {
+  alias /var/www/giavico-web/dashboard/;
+  try_files $uri $uri/ /dashboard/index.html;
 }
 
 location /document/ {
@@ -52,8 +52,8 @@ location /document/ {
   try_files $uri $uri/ /document/index.html;
 }
 
-location /inventory-management/ {
-  alias /var/www/giavico-web/inventory-management/;
-  try_files $uri $uri/ /inventory-management/index.html;
+location /inventory/ {
+  alias /var/www/giavico-web/inventory/;
+  try_files $uri $uri/ /inventory/index.html;
 }
 ```

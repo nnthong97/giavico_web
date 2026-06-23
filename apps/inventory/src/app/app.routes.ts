@@ -4,8 +4,8 @@ export const appRoutes: Route[] = [
   {
     path: '',
     loadComponent: () =>
-      import('./features/inventory/pages/inventory-management.component').then(
-        (module) => module.InventoryManagementComponent
+      import('./features/inventory/pages/inventory.component').then(
+        (module) => module.InventoryComponent
       ),
   },
 ];
