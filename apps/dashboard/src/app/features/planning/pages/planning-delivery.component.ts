@@ -26,24 +26,22 @@ interface AnalysisResult {
     <div class="del-page">
       <div class="page-header">
         <h3>{{ t('checkDelivery') }}</h3>
-        <p>{{ isVi
-          ? 'Nhập thông tin đơn hàng → hệ thống tự phân tích tất cả ràng buộc và tính ngày giao sớm nhất'
-          : '輸入訂單資訊 → 系統自動分析所有限制條件並計算最早交期' }}</p>
+        <p>{{ tl('Enter order info → system auto-analyzes all constraints and calculates earliest delivery date', 'Nhập thông tin đơn hàng → hệ thống tự phân tích tất cả ràng buộc và tính ngày giao sớm nhất', '輸入訂單資訊 → 系統自動分析所有限制條件並計算最早交期') }}</p>
       </div>
 
       <div class="calc-grid">
         <!-- Input Panel -->
         <div class="input-card">
-          <h4>🧮 {{ isVi ? 'Thông Tin Đơn Hàng' : '訂單資訊' }}</h4>
+          <h4>🧮 {{ tl('Order Information', 'Thông Tin Đơn Hàng', '訂單資訊') }}</h4>
 
           <div class="field">
             <label>{{ t('selectProduct') }}</label>
             <select class="sel" [(ngModel)]="productCode">
-              <option value="">{{ isVi ? '— Chọn sản phẩm —' : '— 請選擇產品 —' }}</option>
+              <option value="">{{ tl('— Select product —', '— Chọn sản phẩm —', '— 請選擇產品 —') }}</option>
               @for (line of ['AV', 'ND', 'GV']; track line) {
                 <optgroup [label]="line + ' – ' + (line === 'AV' ? 'Nha Đam/蘆薈' : line === 'ND' ? 'Thạch Dừa/椰果' : 'Nước Trái Cây/果汁')">
                   @for (p of products.filter(x => x.line === line); track p.code) {
-                    <option [value]="p.code">{{ isVi ? p.nameVN : p.nameZH }} – {{ p.code }}</option>
+                    <option [value]="p.code">{{ tl(p.nameVN, p.nameVN, p.nameZH) }} – {{ p.code }}</option>
                   }
                 </optgroup>
               }
@@ -52,11 +50,11 @@ interface AnalysisResult {
 
           @if (selectedProduct) {
             <div class="product-info">
-              <div class="info-row"><span>{{ isVi ? 'Mã TW:' : '台灣碼:' }}</span><span class="mono">{{ selectedProduct.codeTW }}</span></div>
-              <div class="info-row"><span>{{ isVi ? 'Hiệu suất:' : '良率:' }}</span><span>{{ (selectedProduct.yieldRate * 100).toFixed(0) }}%</span></div>
-              <div class="info-row"><span>{{ isVi ? 'Hao hụt:' : '損耗:' }}</span><span>{{ selectedProduct.wastageKg }} kg/lô</span></div>
-              <div class="info-row"><span>{{ isVi ? 'Máy:' : '機台:' }}</span><span>{{ selectedProduct.machineRequired }}</span></div>
-              <div class="info-row"><span>QA:</span><span>{{ selectedProduct.qaDays }} {{ isVi ? 'ngày' : '天' }}</span></div>
+              <div class="info-row"><span>{{ tl('TW code:', 'Mã TW:', '台灣碼:') }}</span><span class="mono">{{ selectedProduct.codeTW }}</span></div>
+              <div class="info-row"><span>{{ tl('Yield:', 'Hiệu suất:', '良率:') }}</span><span>{{ (selectedProduct.yieldRate * 100).toFixed(0) }}%</span></div>
+              <div class="info-row"><span>{{ tl('Wastage:', 'Hao hụt:', '損耗:') }}</span><span>{{ selectedProduct.wastageKg }} kg/{{ tl('batch', 'lô', '批') }}</span></div>
+              <div class="info-row"><span>{{ tl('Machine:', 'Máy:', '機台:') }}</span><span>{{ selectedProduct.machineRequired }}</span></div>
+              <div class="info-row"><span>QA:</span><span>{{ selectedProduct.qaDays }} {{ tl('days', 'ngày', '天') }}</span></div>
             </div>
           }
 
@@ -90,7 +88,7 @@ interface AnalysisResult {
                     {{ t('earliestDate') }}: <strong>{{ fmtFull(r.earliestDelivery) }}</strong>
                   </div>
                   @if (requestedDate) {
-                    <div class="verdict-req">{{ isVi ? 'Yêu cầu:' : '要求:' }} {{ fmtFull(requestedDate) }}</div>
+                    <div class="verdict-req">{{ tl('Requested:', 'Yêu cầu:', '要求:') }} {{ fmtFull(requestedDate) }}</div>
                   }
                 </div>
               </div>
@@ -104,7 +102,7 @@ interface AnalysisResult {
 
             <!-- Timeline Breakdown -->
             <div class="timeline-card">
-              <h5>{{ isVi ? 'Phân Tích Từng Ràng Buộc' : '各限制條件分析' }}</h5>
+              <h5>{{ tl('Constraint Analysis', 'Phân Tích Từng Ràng Buộc', '各限制條件分析') }}</h5>
               <div class="timeline">
                 @for (step of timelineSteps(r); track step.label) {
                   <div class="tl-step">
@@ -127,10 +125,10 @@ interface AnalysisResult {
 
             @if (r.materialShortfall > 0) {
               <div class="shortfall-card">
-                <div class="sf-title">⚠ {{ isVi ? 'Chi Tiết Thiếu Nguyên Liệu' : '原料不足明細' }}</div>
+                <div class="sf-title">⚠ {{ tl('Material Shortage Detail', 'Chi Tiết Thiếu Nguyên Liệu', '原料不足明細') }}</div>
                 <div class="sf-body">
-                  <div>{{ isVi ? 'Cần: ' + neededRaw().toFixed(0) + ' kg nguyên liệu thô' : '需要:' + neededRaw().toFixed(0) + '公斤原料' }}</div>
-                  <div>{{ isVi ? 'Cần mua thêm: ' + r.materialShortfall.toFixed(0) + ' kg' : '需補購:' + r.materialShortfall.toFixed(0) + '公斤' }}</div>
+                  <div>{{ tl('Need: ' + neededRaw().toFixed(0) + ' kg raw material', 'Cần: ' + neededRaw().toFixed(0) + ' kg nguyên liệu thô', '需要:' + neededRaw().toFixed(0) + '公斤原料') }}</div>
+                  <div>{{ tl('Need to purchase: ' + r.materialShortfall.toFixed(0) + ' kg', 'Cần mua thêm: ' + r.materialShortfall.toFixed(0) + ' kg', '需補購:' + r.materialShortfall.toFixed(0) + '公斤') }}</div>
                 </div>
               </div>
             }
@@ -138,9 +136,7 @@ interface AnalysisResult {
           } @else {
             <div class="empty-result">
               <div class="empty-icon">🧮</div>
-              <p>{{ isVi
-                ? 'Chọn sản phẩm, nhập số lượng và ngày giao để bắt đầu phân tích'
-                : '請選擇產品、輸入數量和交期後開始分析' }}</p>
+              <p>{{ tl('Select product, enter quantity and delivery date to start analysis', 'Chọn sản phẩm, nhập số lượng và ngày giao để bắt đầu phân tích', '請選擇產品、輸入數量和交期後開始分析') }}</p>
             </div>
           }
         </div>
@@ -237,6 +233,14 @@ export class PlanningDeliveryComponent {
   result        = signal<AnalysisResult | null>(null);
 
   t(key: string): string { return this.lang.translate(key); }
+  tl(en: string, vi: string, zh: string): string {
+    const l = this.lang.language();
+    return l === 'vi' ? vi : l === 'zh-TW' ? zh : en;
+  }
+  get locale(): string {
+    const l = this.lang.language();
+    return l === 'vi' ? 'vi-VN' : l === 'zh-TW' ? 'zh-TW' : 'en-US';
+  }
   get isVi(): boolean { return this.lang.language() === 'vi'; }
   get todayStr(): string { return this.svc.todayStr(); }
 
@@ -285,14 +289,18 @@ export class PlanningDeliveryComponent {
     let bottleneck = '';
     if (!feasible) {
       if (materialReady > machineReady && shortfall > 0) {
-        bottleneck = this.isVi
-          ? `Thiếu nguyên liệu (${shortfall.toFixed(0)} kg), cần ${relMat?.leadTimeDays ?? 14} ngày để mua`
-          : `原料不足(${shortfall.toFixed(0)}公斤)，需${relMat?.leadTimeDays ?? 14}天採購`;
+        bottleneck = this.tl(
+          `Material shortage (${shortfall.toFixed(0)} kg), need ${relMat?.leadTimeDays ?? 14} days to purchase`,
+          `Thiếu nguyên liệu (${shortfall.toFixed(0)} kg), cần ${relMat?.leadTimeDays ?? 14} ngày để mua`,
+          `原料不足(${shortfall.toFixed(0)}公斤)，需${relMat?.leadTimeDays ?? 14}天採購`
+        );
       } else {
         const daysLate = Math.round((new Date(earliestDelivery).getTime() - new Date(this.requestedDate).getTime()) / 86400000);
-        bottleneck = this.isVi
-          ? `Ngày giao sớm nhất trễ hơn yêu cầu ${daysLate} ngày`
-          : `最早交貨日比要求晚${daysLate}天`;
+        bottleneck = this.tl(
+          `Earliest delivery is ${daysLate} days later than requested`,
+          `Ngày giao sớm nhất trễ hơn yêu cầu ${daysLate} ngày`,
+          `最早交貨日比要求晚${daysLate}天`
+        );
       }
     }
 
@@ -306,40 +314,40 @@ export class PlanningDeliveryComponent {
       {
         label: this.t('materialReady'), date: r.materialReady, dotClass: 'green',
         value: r.materialStatus === 'available'
-          ? (this.isVi ? '✓ Đủ tồn kho' : '✓ 庫存充足')
+          ? this.tl('✓ Stock sufficient', '✓ Đủ tồn kho', '✓ 庫存充足')
           : r.materialStatus === 'partial'
-          ? (this.isVi ? '⚠ Thiếu một phần' : '⚠ 部分不足')
-          : (this.isVi ? '✗ Cần đặt mua toàn bộ' : '✗ 需全部採購'),
+          ? this.tl('⚠ Partially short', '⚠ Thiếu một phần', '⚠ 部分不足')
+          : this.tl('✗ Need full purchase', '✗ Cần đặt mua toàn bộ', '✗ 需全部採購'),
         valueClass: r.materialStatus === 'available' ? 'green' : 'red',
       },
       {
         label: this.t('machineReady'), date: r.machineReady, dotClass: 'blue',
-        value: `${this.isVi ? 'Máy' : '機台'} ${p?.machineRequired} available`,
+        value: `${this.tl('Machine', 'Máy', '機台')} ${p?.machineRequired} available`,
         valueClass: 'blue',
       },
       {
         label: this.t('productionTime'), date: this.svc.addDays(start, r.productionDays), dotClass: 'indigo',
-        value: `${r.productionDays} ${this.isVi ? 'ngày SX' : '天生產'}`,
+        value: `${r.productionDays} ${this.tl('days production', 'ngày SX', '天生產')}`,
         valueClass: 'indigo',
       },
       {
-        label: `${this.t('qaTime')} (${p?.qaDays} ${this.isVi ? 'ngày' : '天'})`, date: this.svc.addDays(start, r.productionDays + r.qaDays), dotClass: 'purple',
-        value: this.isVi ? 'Kiểm định chất lượng' : '品質檢驗',
+        label: `${this.t('qaTime')} (${p?.qaDays} ${this.tl('days', 'ngày', '天')})`, date: this.svc.addDays(start, r.productionDays + r.qaDays), dotClass: 'purple',
+        value: this.tl('Quality inspection', 'Kiểm định chất lượng', '品質檢驗'),
         valueClass: 'purple',
       },
       {
-        label: `${this.t('logistics')} (${r.logisticsDays} ${this.isVi ? 'ngày' : '天'})`, date: r.earliestDelivery, dotClass: 'orange',
-        value: this.isVi ? 'Chuẩn bị container & xuất hàng' : '備貨裝櫃出貨',
+        label: `${this.t('logistics')} (${r.logisticsDays} ${this.tl('days', 'ngày', '天')})`, date: r.earliestDelivery, dotClass: 'orange',
+        value: this.tl('Prepare container & ship', 'Chuẩn bị container & xuất hàng', '備貨裝櫃出貨'),
         valueClass: 'orange',
       },
     ];
   }
 
   fmtFull(s: string): string {
-    return new Date(s).toLocaleDateString(this.isVi ? 'vi-VN' : 'zh-TW', { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'long' });
+    return new Date(s).toLocaleDateString(this.locale, { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'long' });
   }
 
   fmtShort(s: string): string {
-    return new Date(s).toLocaleDateString(this.isVi ? 'vi-VN' : 'zh-TW', { day: '2-digit', month: '2-digit' });
+    return new Date(s).toLocaleDateString(this.locale, { day: '2-digit', month: '2-digit' });
   }
 }

@@ -19,8 +19,8 @@ const STATUS_CSS: Record<string, string> = {
       <!-- Page header -->
       <div class="dash-header">
         <div>
-          <h3>{{ isVi ? 'Tổng Quan Hệ Thống' : '系統總覽' }}</h3>
-          <p>{{ isVi ? 'Cập nhật: ' + todayStr : '更新：' + todayStr }}</p>
+          <h3>{{ tl('System Overview', 'Tổng Quan Hệ Thống', '系統總覽') }}</h3>
+          <p>{{ tl('Updated: ', 'Cập nhật: ', '更新：') + todayStr }}</p>
         </div>
       </div>
 
@@ -43,13 +43,13 @@ const STATUS_CSS: Record<string, string> = {
         <a routerLink="../inventory" class="alert-card" [class.danger]="stats().expiryAlerts > 0" [class.safe]="stats().expiryAlerts === 0">
           <div class="alert-head"><span>⚠</span><span>{{ t('expiryAlert') }}</span></div>
           <div class="alert-num">{{ stats().expiryAlerts }}</div>
-          <div class="alert-sub">{{ isVi ? 'vật tư hết hạn < 30 ngày' : '物料效期 < 30天' }}</div>
+          <div class="alert-sub">{{ tl('materials expiring < 30 days', 'vật tư hết hạn < 30 ngày', '物料效期 < 30天') }}</div>
         </a>
 
         <a routerLink="../inventory" class="alert-card warn">
           <div class="alert-head"><span>🕐</span><span>{{ t('agedStock') }}</span></div>
           <div class="alert-num">{{ stats().agedCount }}</div>
-          <div class="alert-sub">{{ isVi ? 'lô thành phẩm tồn > 2 tháng' : '庫存超2個月批次' }}</div>
+          <div class="alert-sub">{{ tl('finished goods > 2 months', 'lô thành phẩm tồn > 2 tháng', '庫存超2個月批次') }}</div>
         </a>
 
         <a routerLink="../schedule" class="alert-card" [class.info]="achievement >= 80" [class.warn-soft]="achievement < 80">
@@ -58,9 +58,7 @@ const STATUS_CSS: Record<string, string> = {
             {{ todayPlanned > 0 ? achievement + '%' : '—' }}
           </div>
           <div class="alert-sub">
-            {{ isVi
-              ? todayActual.toLocaleString() + ' / ' + todayPlanned.toLocaleString() + ' kg hôm nay'
-              : '今日 ' + todayActual.toLocaleString() + ' / ' + todayPlanned.toLocaleString() + ' 公斤' }}
+            {{ tl('', '', '今日 ') + todayActual.toLocaleString() + ' / ' + todayPlanned.toLocaleString() + tl(' kg today', ' kg hôm nay', ' 公斤') }}
           </div>
           @if (todayPlanned > 0) {
             <div class="progress-bar">
@@ -73,7 +71,7 @@ const STATUS_CSS: Record<string, string> = {
       <!-- Weekly Chart (SVG) -->
       <div class="chart-row">
         <div class="chart-card wide">
-          <h4>{{ isVi ? 'Sản Lượng Tuần Này (kg)' : '本週生產量 (公斤)' }}</h4>
+          <h4>{{ tl('Weekly Output (kg)', 'Sản Lượng Tuần Này (kg)', '本週生產量 (公斤)') }}</h4>
           <div class="bar-chart">
             @for (d of weekData; track d.day) {
               <div class="bar-group">
@@ -95,7 +93,7 @@ const STATUS_CSS: Record<string, string> = {
 
         <!-- Pie chart: order status -->
         <div class="chart-card">
-          <h4>{{ isVi ? 'Đơn Hàng Theo Trạng Thái' : '訂單狀態分佈' }}</h4>
+          <h4>{{ tl('Order Status Distribution', 'Đơn Hàng Theo Trạng Thái', '訂單狀態分佈') }}</h4>
           <div class="pie-container">
             <svg viewBox="0 0 120 120" class="pie-svg">
               @for (slice of pieSlices; track slice.label; let i = $index) {
@@ -120,8 +118,8 @@ const STATUS_CSS: Record<string, string> = {
       <!-- Active Orders Table -->
       <div class="orders-card">
         <div class="orders-head">
-          <h4>{{ isVi ? 'Đơn Hàng Đang Xử Lý' : '處理中訂單' }}</h4>
-          <a routerLink="../orders" class="see-all">{{ isVi ? 'Xem tất cả ›' : '查看全部 ›' }}</a>
+          <h4>{{ tl('Active Orders', 'Đơn Hàng Đang Xử Lý', '處理中訂單') }}</h4>
+          <a routerLink="../orders" class="see-all">{{ tl('View all ›', 'Xem tất cả ›', '查看全部 ›') }}</a>
         </div>
         <div class="table-wrap">
           <table class="p-table">
@@ -141,7 +139,7 @@ const STATUS_CSS: Record<string, string> = {
                   <td class="mono blue">{{ o.vnCode }}</td>
                   <td>
                     <span class="line-badge" [class]="LINE_CSS[o.productLine]">{{ o.productLine }}</span>
-                    <span class="prod-name">{{ isVi ? o.productName : o.productNameZH }}</span>
+                    <span class="prod-name">{{ tl(o.productName, o.productName, o.productNameZH) }}</span>
                   </td>
                   <td class="muted">{{ o.region }}</td>
                   <td class="right bold">{{ o.qty.toLocaleString() }}</td>
@@ -149,7 +147,7 @@ const STATUS_CSS: Record<string, string> = {
                   <td><span class="status-badge" [class]="STATUS_CSS[o.status]">{{ t(o.status) }}</span></td>
                 </tr>
               } @empty {
-                <tr><td colspan="6" class="empty">{{ isVi ? 'Không có đơn đang xử lý' : '目前無處理中訂單' }}</td></tr>
+                <tr><td colspan="6" class="empty">{{ tl('No active orders', 'Không có đơn đang xử lý', '目前無處理中訂單') }}</td></tr>
               }
             </tbody>
           </table>
@@ -271,10 +269,18 @@ export class PlanningDashboardComponent {
   private readonly svc = inject(PlanningService);
 
   t(key: string): string { return this.lang.translate(key); }
+  tl(en: string, vi: string, zh: string): string {
+    const l = this.lang.language();
+    return l === 'vi' ? vi : l === 'zh-TW' ? zh : en;
+  }
+  get locale(): string {
+    const l = this.lang.language();
+    return l === 'vi' ? 'vi-VN' : l === 'zh-TW' ? 'zh-TW' : 'en-US';
+  }
 
   get isVi(): boolean { return this.lang.language() === 'vi'; }
   get stats() { return this.svc.stats; }
-  get todayStr(): string { return new Date().toLocaleDateString(this.isVi ? 'vi-VN' : 'zh-TW'); }
+  get todayStr(): string { return new Date().toLocaleDateString(this.locale); }
   get todayPlanned(): number { return this.svc.stats().todayPlan.planned; }
   get todayActual(): number  { return this.svc.stats().todayPlan.actual; }
   get achievement(): number  { return this.todayPlanned > 0 ? Math.round((this.todayActual / this.todayPlanned) * 100) : 0; }

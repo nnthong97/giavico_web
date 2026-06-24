@@ -4,245 +4,220 @@ import { AppLanguage, LanguageService } from '../../../core/i18n/language.servic
 import { ThemeService } from '../../../core/theme/theme.service';
 import { PlanningService } from '../data-access/planning.service';
 
-type ProductLine = 'all' | 'AV' | 'ND' | 'GV';
-
 @Component({
   selector: 'app-planning-shell',
   standalone: true,
   imports: [RouterModule, RouterLink, RouterLinkActive],
   template: `
-    <div class="ps-root">
-      <!-- ── Sidebar ── -->
-      <aside class="ps-sidebar">
-        <div class="ps-brand">
-          <span class="ps-brand-mark">G</span>
-          <div>
-            <strong>Giavico</strong>
-            <span>生管部 · PLAN</span>
-          </div>
+    <div class="planning-app">
+
+      <!-- ── Top header (matches R&D Documents pattern) ── -->
+      <header class="planning-header">
+        <div class="ph-brand">
+          <a routerLink="/" class="ph-brand-link" aria-label="Back to Workbench">
+            <span class="ph-brand-mark">G</span>
+            <span>
+              <strong>Giavico</strong>
+              <small>生管部 · Production Planning</small>
+            </span>
+          </a>
         </div>
 
-        <nav class="ps-nav">
-          <a routerLink="dashboard" routerLinkActive="active" class="ps-nav-item">
-            <span class="ps-nav-icon">📊</span>{{ t('navDashboard') }}
-          </a>
-          <a routerLink="orders" routerLinkActive="active" class="ps-nav-item">
-            <span class="ps-nav-icon">📋</span>{{ t('navOrders') }}
-          </a>
-          <a routerLink="schedule" routerLinkActive="active" class="ps-nav-item">
-            <span class="ps-nav-icon">📅</span>{{ t('navSchedule') }}
-          </a>
-          <a routerLink="inventory" routerLinkActive="active" class="ps-nav-item">
-            <span class="ps-nav-icon">📦</span>{{ t('navInventory') }}
-          </a>
-          <a routerLink="delivery" routerLinkActive="active" class="ps-nav-item">
-            <span class="ps-nav-icon">🚢</span>{{ t('navDelivery') }}
-          </a>
+        <nav class="ph-nav" role="tablist">
+          <a routerLink="dashboard"  routerLinkActive="active" class="ph-tab">📊 {{ t('navDashboard') }}</a>
+          <a routerLink="orders"     routerLinkActive="active" class="ph-tab">📋 {{ t('navOrders') }}</a>
+          <a routerLink="schedule"   routerLinkActive="active" class="ph-tab">📅 {{ t('navSchedule') }}</a>
+          <a routerLink="inventory"  routerLinkActive="active" class="ph-tab">📦 {{ t('navInventory') }}</a>
+          <a routerLink="delivery"   routerLinkActive="active" class="ph-tab">🚢 {{ t('navDelivery') }}</a>
         </nav>
 
-        <!-- Product Line Filter -->
-        <div class="ps-line-section">
-          <span class="ps-section-label">{{ t('productionArea') }}</span>
-          <div class="ps-lines">
-            @for (line of LINES; track line.key) {
-              <button
-                type="button"
-                class="ps-line-btn"
-                [class.active]="svc.selectedLine() === line.key"
-                [class.av]="line.key === 'AV'"
-                [class.nd]="line.key === 'ND'"
-                [class.gv]="line.key === 'GV'"
-                (click)="svc.selectedLine.set(line.key)"
-              >{{ line.label }}</button>
-            }
-          </div>
-        </div>
-
-        <!-- Controls -->
-        <div class="ps-controls">
-          <label class="ps-control-label">{{ t('language') }}</label>
-          <select class="ps-select" [value]="lang.language()" (change)="setLang($any($event.target).value)">
+        <div class="ph-tools">
+          <label class="sr-only">{{ t('language') }}</label>
+          <select class="ph-select" [value]="lang.language()" (change)="setLang($any($event.target).value)">
             <option value="en">EN</option>
             <option value="vi">VI</option>
             <option value="zh-TW">繁中</option>
           </select>
-          <button type="button" class="ps-theme-btn" (click)="theme.toggleTheme()">
+          <button type="button" class="ph-btn" (click)="theme.toggleTheme()">
             {{ theme.theme() === 'dark' ? t('lightMode') : t('darkMode') }}
           </button>
         </div>
+      </header>
 
-        <a routerLink="/" class="ps-back-link">← {{ t('workbenchTitle') }}</a>
-      </aside>
+      <!-- ── Product line filter bar ── -->
+      <div class="ph-line-bar">
+        <span class="ph-line-label">{{ t('productionArea') }}:</span>
+        @for (line of LINES; track line.key) {
+          <button
+            type="button"
+            class="ph-line-btn"
+            [class.active]="svc.selectedLine() === line.key"
+            [attr.data-line]="line.key"
+            (click)="svc.selectedLine.set(line.key)"
+          >{{ line.label }}</button>
+        }
+        @if (svc.selectedLine() !== 'all') {
+          <span class="ph-line-active-badge" [attr.data-line]="svc.selectedLine()">
+            {{ svc.selectedLine() }}
+          </span>
+        }
+      </div>
 
-      <!-- ── Main ── -->
-      <main class="ps-main">
-        <header class="ps-header">
-          <div>
-            <span class="ps-kicker">生管部 · PRODUCTION PLANNING</span>
-            <h1>{{ t('planningTitle') }}</h1>
-            <p>{{ t('planningSubtitle') }}</p>
-          </div>
-          @if (svc.selectedLine() !== 'all') {
-            <div class="ps-active-line" [class.av]="svc.selectedLine()==='AV'" [class.nd]="svc.selectedLine()==='ND'" [class.gv]="svc.selectedLine()==='GV'">
-              {{ svc.selectedLine() }}
-            </div>
-          }
-        </header>
-        <div class="ps-content">
-          <router-outlet />
-        </div>
+      <!-- ── Page content ── -->
+      <main class="ph-content">
+        <router-outlet />
       </main>
     </div>
   `,
   styles: [`
     :host { display: block; font-family: 'Inter', system-ui, sans-serif; }
 
-    /* ── Layout ── */
-    .ps-root {
-      display: grid;
-      grid-template-columns: 220px minmax(0, 1fr);
+    /* ── App shell ── */
+    .planning-app {
+      background: #0b1220;
+      color: #dbe5f2;
       min-height: 100vh;
-      background: #0f172a;
-      color: #e2e8f0;
     }
 
-    /* ── Sidebar ── */
-    .ps-sidebar {
-      background: #111827;
-      border-right: 1px solid #1e293b;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+    /* ── Header ── */
+    .planning-header {
       position: sticky;
       top: 0;
-      height: 100vh;
-      overflow-y: auto;
+      z-index: 10;
+      background: #111c2e;
+      border-bottom: 1px solid #2b3a50;
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto minmax(220px, 1fr);
+      align-items: center;
+      gap: 28px;
+      min-height: 72px;
+      padding: 12px 28px;
     }
 
     /* Brand */
-    .ps-brand {
+    .ph-brand-link {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #1e293b;
-    }
-    .ps-brand-mark {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #0284c7, #4f46e5);
-      color: #fff;
-      font-weight: 800;
-      display: inline-flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .ps-brand strong { display: block; color: #f8fafc; font-size: .94rem; }
-    .ps-brand span   { display: block; color: #64748b; font-size: .74rem; margin-top: 2px; }
-
-    /* Nav */
-    .ps-nav { display: flex; flex-direction: column; gap: 2px; }
-    .ps-nav-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: .82rem; font-weight: 600;
-      color: #94a3b8;
       text-decoration: none;
+      color: #f8fafc;
+    }
+    .ph-brand-link:hover .ph-brand-mark { opacity: .85; }
+    .ph-brand-mark {
+      width: 38px; height: 38px; flex-shrink: 0;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #0284c7, #4f46e5);
+      color: #fff; font-weight: 900;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .ph-brand-link strong { display: block; font-size: .94rem; color: #f8fafc; }
+    .ph-brand-link small  { display: block; font-size: .72rem; color: #91a1b8; margin-top: 2px; }
+
+    /* Nav tabs */
+    .ph-nav {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+    }
+    .ph-tab {
+      border-radius: 6px;
+      color: #9fb0c6;
+      font-size: .84rem;
+      font-weight: 700;
+      padding: 9px 12px;
+      text-decoration: none;
+      white-space: nowrap;
       transition: background .15s, color .15s;
     }
-    .ps-nav-item:hover { background: #1e293b; color: #cbd5e1; }
-    .ps-nav-item.active { background: #1e3a5f; color: #60a5fa; }
-    .ps-nav-icon { font-size: .82rem; }
+    .ph-tab:hover { background: #1b2a40; color: #f8fafc; }
+    .ph-tab.active { background: #1b2a40; color: #f8fafc; }
 
-    /* Line filter */
-    .ps-line-section { display: flex; flex-direction: column; gap: 8px; }
-    .ps-section-label { font-size: .7rem; font-weight: 700; letter-spacing: .1em; color: #475569; text-transform: uppercase; }
-    .ps-lines { display: flex; flex-wrap: wrap; gap: 6px; }
-    .ps-line-btn {
-      padding: 4px 12px;
+    /* Tools */
+    .ph-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .ph-select, .ph-btn {
+      background: #0b1220;
+      border: 1px solid #3a4b63;
+      border-radius: 6px;
+      color: #dbe5f2;
+      font: inherit;
+      font-size: .83rem;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+    .ph-select:focus, .ph-btn:hover { border-color: #3b82f6; outline: none; }
+
+    /* ── Line filter bar ── */
+    .ph-line-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 28px;
+      background: #0d1525;
+      border-bottom: 1px solid #1e2d42;
+      flex-wrap: wrap;
+    }
+    .ph-line-label {
+      font-size: .72rem;
+      font-weight: 700;
+      color: #4b617e;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-right: 4px;
+    }
+    .ph-line-btn {
+      padding: 4px 14px;
       border-radius: 999px;
-      border: 1px solid #334155;
+      border: 1px solid #2b3a50;
       background: transparent;
-      color: #94a3b8;
-      font-size: .75rem; font-weight: 700;
+      color: #6b839e;
+      font-size: .78rem; font-weight: 700;
       cursor: pointer;
       transition: all .15s;
     }
-    .ps-line-btn:hover { border-color: #64748b; color: #cbd5e1; }
-    .ps-line-btn.active        { color: #fff; border-color: transparent; }
-    .ps-line-btn.active.av     { background: #16a34a; }
-    .ps-line-btn.active.nd     { background: #2563eb; }
-    .ps-line-btn.active.gv     { background: #ea580c; }
-    .ps-line-btn:not(.active)[class*="av"]:hover { color: #4ade80; border-color: #16a34a; }
-    .ps-line-btn:not(.active)[class*="nd"]:hover { color: #60a5fa; border-color: #2563eb; }
-    .ps-line-btn:not(.active)[class*="gv"]:hover { color: #fb923c; border-color: #ea580c; }
+    .ph-line-btn:hover  { border-color: #4b617e; color: #dbe5f2; }
+    .ph-line-btn.active { background: #1b2a40; border-color: #3b82f6; color: #93c5fd; }
+    .ph-line-btn.active[data-line="AV"] { border-color: #22c55e; color: #86efac; background: #052e16; }
+    .ph-line-btn.active[data-line="ND"] { border-color: #3b82f6; color: #93c5fd; background: #1e3a5f; }
+    .ph-line-btn.active[data-line="GV"] { border-color: #f97316; color: #fdba74; background: #431407; }
 
-    /* Controls */
-    .ps-controls { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
-    .ps-control-label { font-size: .7rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .08em; }
-    .ps-select {
-      width: 100%; padding: 6px 8px; border-radius: 6px;
-      border: 1px solid #334155; background: #1e293b; color: #cbd5e1;
-      font-size: .8rem; cursor: pointer;
+    .ph-line-active-badge {
+      font-size: .72rem; font-weight: 800;
+      padding: 3px 10px; border-radius: 999px;
+      margin-left: 4px;
     }
-    .ps-theme-btn {
-      width: 100%; padding: 7px 10px; border-radius: 8px;
-      border: 1px solid #334155; background: #1e293b; color: #94a3b8;
-      font-size: .78rem; font-weight: 600; cursor: pointer;
-      transition: background .15s, color .15s;
+    .ph-line-active-badge[data-line="AV"] { background: #16a34a; color: #fff; }
+    .ph-line-active-badge[data-line="ND"] { background: #2563eb; color: #fff; }
+    .ph-line-active-badge[data-line="GV"] { background: #ea580c; color: #fff; }
+
+    /* ── Content ── */
+    .ph-content {
+      margin: 0 auto;
+      max-width: 1320px;
+      padding: 32px 28px 64px;
     }
-    .ps-theme-btn:hover { background: #0f172a; color: #cbd5e1; }
-    .ps-back-link {
-      display: block; font-size: .76rem; color: #475569; text-decoration: none;
-      padding: 6px 2px;
-    }
-    .ps-back-link:hover { color: #94a3b8; }
 
-    /* ── Main area ── */
-    .ps-main { display: flex; flex-direction: column; min-height: 100vh; }
+    /* ── Light theme ── */
+    :host-context(.light-theme) .planning-app   { background: #f4f7fb; color: #1a2636; }
+    :host-context(.light-theme) .planning-header { background: #fff; border-color: #dde4ef; }
+    :host-context(.light-theme) .ph-brand-link  { color: #1e293b; }
+    :host-context(.light-theme) .ph-brand-link small { color: #64748b; }
+    :host-context(.light-theme) .ph-tab         { color: #64748b; }
+    :host-context(.light-theme) .ph-tab:hover, :host-context(.light-theme) .ph-tab.active { background: #f1f5f9; color: #1e293b; }
+    :host-context(.light-theme) .ph-select,
+    :host-context(.light-theme) .ph-btn         { background: #f8fafc; border-color: #cbd5e1; color: #334155; }
+    :host-context(.light-theme) .ph-line-bar    { background: #f1f5f9; border-color: #dde4ef; }
+    :host-context(.light-theme) .ph-line-label  { color: #94a3b8; }
+    :host-context(.light-theme) .ph-line-btn    { border-color: #e2e8f0; color: #64748b; }
+    :host-context(.light-theme) .ph-line-btn:hover { border-color: #94a3b8; color: #1e293b; }
+    :host-context(.light-theme) .ph-line-btn.active { background: #dbeafe; border-color: #3b82f6; color: #1d4ed8; }
 
-    .ps-header {
-      padding: 22px 28px 16px;
-      background: linear-gradient(135deg, #111827, #17233b);
-      border-bottom: 1px solid #1e293b;
-      display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-    }
-    .ps-kicker { display: block; font-size: .68rem; font-weight: 800; letter-spacing: .14em; color: #3b82f6; margin-bottom: 4px; }
-    .ps-header h1 { font-size: 1.4rem; color: #f1f5f9; margin: 0 0 4px; font-weight: 700; }
-    .ps-header p  { margin: 0; font-size: .83rem; color: #64748b; }
-
-    .ps-active-line {
-      padding: 8px 18px; border-radius: 999px; font-size: .85rem; font-weight: 800;
-      color: #fff; flex-shrink: 0; margin-top: 4px;
-    }
-    .ps-active-line.av { background: #16a34a; }
-    .ps-active-line.nd { background: #2563eb; }
-    .ps-active-line.gv { background: #ea580c; }
-
-    .ps-content { padding: 22px 24px; flex: 1; }
-
-    /* ── Light theme overrides ── */
-    :host-context(.light-theme) .ps-root      { background: #f4f7f5; color: #1a1b1f; }
-    :host-context(.light-theme) .ps-sidebar   { background: #fff; border-color: #e2e8f0; }
-    :host-context(.light-theme) .ps-brand     { border-color: #e2e8f0; }
-    :host-context(.light-theme) .ps-brand strong { color: #1e293b; }
-    :host-context(.light-theme) .ps-brand span   { color: #94a3b8; }
-    :host-context(.light-theme) .ps-nav-item  { color: #64748b; }
-    :host-context(.light-theme) .ps-nav-item:hover  { background: #f1f5f9; color: #1e293b; }
-    :host-context(.light-theme) .ps-nav-item.active { background: #dbeafe; color: #1d4ed8; }
-    :host-context(.light-theme) .ps-line-btn  { border-color: #cbd5e1; color: #64748b; }
-    :host-context(.light-theme) .ps-line-btn:hover { border-color: #94a3b8; color: #1e293b; }
-    :host-context(.light-theme) .ps-select    { background: #f8fafc; border-color: #cbd5e1; color: #334155; }
-    :host-context(.light-theme) .ps-theme-btn { background: #f8fafc; border-color: #cbd5e1; color: #64748b; }
-    :host-context(.light-theme) .ps-theme-btn:hover { background: #f1f5f9; color: #1e293b; }
-    :host-context(.light-theme) .ps-header    { background: linear-gradient(135deg, #f8fbff, #eef5ff); border-color: #e2e8f0; }
-    :host-context(.light-theme) .ps-header h1 { color: #102f67; }
-    :host-context(.light-theme) .ps-header p  { color: #64748b; }
-    :host-context(.light-theme) .ps-kicker    { color: #1766c2; }
-    :host-context(.light-theme) .ps-back-link { color: #94a3b8; }
-    :host-context(.light-theme) .ps-back-link:hover { color: #64748b; }
-    :host-context(.light-theme) .ps-section-label { color: #94a3b8; }
+    /* Accessibility */
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -253,9 +228,9 @@ export class PlanningShellComponent {
 
   readonly LINES: { key: 'all' | 'AV' | 'ND' | 'GV'; label: string }[] = [
     { key: 'all', label: 'All' },
-    { key: 'AV',  label: 'AV' },
-    { key: 'ND',  label: 'ND' },
-    { key: 'GV',  label: 'GV' },
+    { key: 'AV',  label: 'AV – Nha Đam' },
+    { key: 'ND',  label: 'ND – Thạch Dừa' },
+    { key: 'GV',  label: 'GV – Nước Trái Cây' },
   ];
 
   t(key: string): string { return this.lang.translate(key); }
