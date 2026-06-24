@@ -4,6 +4,8 @@ import { PLANNING_INVENTORY, PLANNING_ORDERS, PLANNING_PRODUCTS, PLANNING_SLOTS 
 
 @Injectable({ providedIn: 'root' })
 export class PlanningService {
+  readonly selectedLine = signal<'all' | 'AV' | 'ND' | 'GV'>('all');
+
   readonly orders = signal<Order[]>(PLANNING_ORDERS);
   readonly materials = signal<Material[]>(PLANNING_INVENTORY);
   readonly products = signal<Product[]>(PLANNING_PRODUCTS);

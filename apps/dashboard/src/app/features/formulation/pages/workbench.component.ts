@@ -112,7 +112,11 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
             >
               <span>DC</span>
               {{ t('rndDocuments') }}
-            </button>
+            </a>
+            <a routerLink="/planning" class="menu-item">
+              <span>PL</span>
+              {{ t('planNav') }}
+            </a>
             <button
               type="button"
               class="menu-item"
