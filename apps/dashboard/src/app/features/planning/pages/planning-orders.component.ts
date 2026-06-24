@@ -18,7 +18,7 @@ const STATUS_CSS: Record<string, string> = {
     <div class="orders-page">
       <div class="page-header">
         <div>
-          <h3>{{ tl('Order Management', 'Quản Lý Đơn Hàng', '訂單管理') }}</h3>
+          <h3>{{ isVi ? 'Quản Lý Đơn Hàng' : '訂單管理' }}</h3>
           <p>{{ t('total') }} {{ filtered().length }} {{ t('items') }}</p>
         </div>
         <button class="btn-export">⬇ {{ t('export') }}</button>
@@ -45,23 +45,23 @@ const STATUS_CSS: Record<string, string> = {
       <!-- Summary -->
       <div class="summary-grid">
         <div class="sum-card">
-          <div class="sum-val">{{ totalQty.toLocaleString() }} {{ tl('boxes', 'hộp', '箱') }}</div>
-          <div class="sum-label">{{ tl('Total ordered', 'Tổng SL đặt hàng', '總訂購量') }}</div>
+          <div class="sum-val">{{ totalQty.toLocaleString() }} {{ isVi ? 'hộp' : '箱' }}</div>
+          <div class="sum-label">{{ isVi ? 'Tổng SL đặt hàng' : '總訂購量' }}</div>
         </div>
         <div class="sum-card blue">
-          <div class="sum-val">{{ totalProduced.toLocaleString() }} {{ tl('boxes', 'hộp', '箱') }}</div>
-          <div class="sum-label">{{ tl('Produced', 'Đã sản xuất', '已生產') }}</div>
+          <div class="sum-val">{{ totalProduced.toLocaleString() }} {{ isVi ? 'hộp' : '箱' }}</div>
+          <div class="sum-label">{{ isVi ? 'Đã sản xuất' : '已生產' }}</div>
         </div>
         <div class="sum-card green">
-          <div class="sum-val">{{ totalShipped.toLocaleString() }} {{ tl('boxes', 'hộp', '箱') }}</div>
-          <div class="sum-label">{{ tl('Shipped', 'Đã xuất hàng', '已出貨') }}</div>
+          <div class="sum-val">{{ totalShipped.toLocaleString() }} {{ isVi ? 'hộp' : '箱' }}</div>
+          <div class="sum-label">{{ isVi ? 'Đã xuất hàng' : '已出貨' }}</div>
         </div>
       </div>
 
       <!-- Table -->
       <div class="table-card">
         @if (filtered().length === 0) {
-          <div class="empty">{{ tl('No orders found', 'Không tìm thấy đơn hàng nào', '找不到符合條件的訂單') }}</div>
+          <div class="empty">{{ isVi ? 'Không tìm thấy đơn hàng nào' : '找不到符合條件的訂單' }}</div>
         } @else {
           <div class="table-wrap">
             <table class="p-table">
@@ -87,7 +87,7 @@ const STATUS_CSS: Record<string, string> = {
                       <div class="prod-cell">
                         <span class="line-badge" [class]="LINE_CSS[o.productLine]">{{ o.productLine }}</span>
                         <div>
-                          <div class="prod-name">{{ tl(o.productName, o.productName, o.productNameZH) }}</div>
+                          <div class="prod-name">{{ isVi ? o.productName : o.productNameZH }}</div>
                           <div class="prod-code">{{ o.productCodeTW }}</div>
                         </div>
                       </div>
@@ -193,10 +193,6 @@ export class PlanningOrdersComponent {
   filterStatus = 'all';
 
   t(key: string): string { return this.lang.translate(key); }
-  tl(en: string, vi: string, zh: string): string {
-    const l = this.lang.language();
-    return l === 'vi' ? vi : l === 'zh-TW' ? zh : en;
-  }
   get isVi(): boolean { return this.lang.language() === 'vi'; }
 
   filtered(): Order[] {

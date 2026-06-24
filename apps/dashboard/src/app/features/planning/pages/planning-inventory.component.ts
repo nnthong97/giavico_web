@@ -19,8 +19,8 @@ const RISK_CSS: Record<RiskLevel, string> = {
   template: `
     <div class="inv-page">
       <div>
-        <h3>{{ tl('Inventory & Materials', 'Quản Lý Tồn Kho & Vật Tư', '庫存與物料管理') }}</h3>
-        <p>{{ tl('Sources: Warehouse + SX1 + SX2 + SX4', 'Tổng hợp từ: Kho + SX1 + SX2 + SX4', '彙整自：倉庫 + 生產一 + 生產二 + 生產四') }}</p>
+        <h3>{{ isVi ? 'Quản Lý Tồn Kho & Vật Tư' : '庫存與物料管理' }}</h3>
+        <p>{{ isVi ? 'Tổng hợp từ: Kho + SX1 + SX2 + SX4' : '彙整自：倉庫 + 生產一 + 生產二 + 生產四' }}</p>
       </div>
 
       <!-- Alert Summary -->
@@ -39,19 +39,19 @@ const RISK_CSS: Record<RiskLevel, string> = {
         <div class="tab-row">
           @for (tb of tabs; track tb.key) {
             <button class="tab-btn" [class.active]="activeTab() === tb.key" (click)="activeTab.set(tb.key)">
-              {{ tl(tb.labelEn, tb.labelVi, tb.labelZh) }}
+              {{ isVi ? tb.labelVi : tb.labelZh }}
             </button>
           }
         </div>
         <div class="filter-row">
           <div class="search-wrap">
             <span class="search-icon">🔍</span>
-            <input class="search-input" [(ngModel)]="search" [placeholder]="tl('Search code or name...', 'Tìm theo mã, tên...', '搜尋碼或名稱...')" />
+            <input class="search-input" [(ngModel)]="search" [placeholder]="isVi ? 'Tìm theo mã, tên...' : '搜尋碼或名稱...'" />
           </div>
           <select class="sel" [(ngModel)]="sortBy">
-            <option value="expiry">{{ tl('Sort: Expiry', 'Sắp xếp: Hạn SD', '排序：效期') }}</option>
-            <option value="stock">{{ tl('Sort: Stock', 'Sắp xếp: Tồn kho', '排序：庫存量') }}</option>
-            <option value="name">{{ tl('Sort: Name', 'Sắp xếp: Tên', '排序：名稱') }}</option>
+            <option value="expiry">{{ isVi ? 'Sắp xếp: Hạn SD' : '排序：效期' }}</option>
+            <option value="stock">{{ isVi ? 'Sắp xếp: Tồn kho' : '排序：庫存量' }}</option>
+            <option value="name">{{ isVi ? 'Sắp xếp: Tên' : '排序：名稱' }}</option>
           </select>
         </div>
       </div>
@@ -59,7 +59,7 @@ const RISK_CSS: Record<RiskLevel, string> = {
       <!-- Table -->
       <div class="table-card">
         @if (sorted().length === 0) {
-          <div class="empty">{{ tl('No materials found', 'Không tìm thấy vật tư nào', '找不到物料') }}</div>
+          <div class="empty">{{ isVi ? 'Không tìm thấy vật tư nào' : '找不到物料' }}</div>
         } @else {
           <div class="table-wrap">
             <table class="p-table">
@@ -88,14 +88,14 @@ const RISK_CSS: Record<RiskLevel, string> = {
                       <div class="mono muted xs">{{ m.codeTW }}</div>
                     </td>
                     <td>
-                      <div class="mat-name">{{ tl(m.nameVN, m.nameVN, m.nameZH) }}</div>
+                      <div class="mat-name">{{ isVi ? m.nameVN : m.nameZH }}</div>
                       <div class="mat-meta">
-                        @if (m.origin === 'import') { <span class="badge-import">{{ tl('Import', 'Nhập khẩu', '進口') }}</span> }
-                        @if (m.seasonal) { <span class="badge-seasonal">{{ tl('Seasonal', 'Mùa vụ', '季節性') }}</span> }
-                        <span class="muted xs">{{ tl('Lead: ', 'Lead: ', '前置:') + m.leadTimeDays + tl('d', 'ngày', '天') }}</span>
+                        @if (m.origin === 'import') { <span class="badge-import">{{ isVi ? 'Nhập khẩu' : '進口' }}</span> }
+                        @if (m.seasonal) { <span class="badge-seasonal">{{ isVi ? 'Mùa vụ' : '季節性' }}</span> }
+                        <span class="muted xs">{{ isVi ? 'Lead: ' + m.leadTimeDays + 'd' : '前置:' + m.leadTimeDays + '天' }}</span>
                       </div>
                     </td>
-                    <td><span class="type-badge" [class]="typeCSS[m.type]">{{ tl(typeLabels[m.type].en, typeLabels[m.type].vi, typeLabels[m.type].zh) }}</span></td>
+                    <td><span class="type-badge" [class]="typeCSS[m.type]">{{ isVi ? typeLabels[m.type].vi : typeLabels[m.type].zh }}</span></td>
                     <td class="right">{{ m.stockWarehouse.toLocaleString() }}</td>
                     <td class="right muted">{{ m.stockSX1 > 0 ? m.stockSX1.toLocaleString() : '—' }}</td>
                     <td class="right muted">{{ m.stockSX2 > 0 ? m.stockSX2.toLocaleString() : '—' }}</td>
@@ -106,8 +106,8 @@ const RISK_CSS: Record<RiskLevel, string> = {
                       @if (m.expiryDate) {
                         <div class="xs days-left" [class.red]="dLeft < 30">
                           {{ dLeft < 0
-                            ? tl('Expired ' + (-dLeft) + 'd ago', 'Hết hạn ' + (-dLeft) + ' ngày', '已逾期' + (-dLeft) + '天')
-                            : tl(dLeft + ' days left', 'Còn ' + dLeft + ' ngày', '剩' + dLeft + '天') }}
+                            ? (isVi ? 'Hết hạn ' + (-dLeft) + ' ngày' : '已逾期' + (-dLeft) + '天')
+                            : (isVi ? 'Còn ' + dLeft + ' ngày' : '剩' + dLeft + '天') }}
                         </div>
                       }
                     </td>
@@ -193,17 +193,17 @@ const RISK_CSS: Record<RiskLevel, string> = {
 export class PlanningInventoryComponent {
   protected readonly RISK_CSS = RISK_CSS;
   protected readonly tabs = [
-    { key: 'all' as TabKey,       labelEn: 'All',         labelVi: 'Tất cả',         labelZh: '全部' },
-    { key: 'raw' as TabKey,       labelEn: 'Raw',         labelVi: 'Nguyên liệu',    labelZh: '原料' },
-    { key: 'semi' as TabKey,      labelEn: 'Semi',        labelVi: 'Bán thành phẩm', labelZh: '半成品' },
-    { key: 'auxiliary' as TabKey, labelEn: 'Auxiliary',   labelVi: 'Phụ liệu',       labelZh: '輔料' },
-    { key: 'finished' as TabKey,  labelEn: 'Finished',    labelVi: 'Thành phẩm',     labelZh: '成品' },
+    { key: 'all' as TabKey,       labelVi: 'Tất cả',         labelZh: '全部' },
+    { key: 'raw' as TabKey,       labelVi: 'Nguyên liệu',    labelZh: '原料' },
+    { key: 'semi' as TabKey,      labelVi: 'Bán thành phẩm', labelZh: '半成品' },
+    { key: 'auxiliary' as TabKey, labelVi: 'Phụ liệu',       labelZh: '輔料' },
+    { key: 'finished' as TabKey,  labelVi: 'Thành phẩm',     labelZh: '成品' },
   ];
-  protected readonly typeLabels: Record<string, { en: string; vi: string; zh: string }> = {
-    raw:       { en: 'Raw material', vi: 'Nguyên liệu', zh: '原料' },
-    semi:      { en: 'Semi',         vi: 'BTP',         zh: '半成品' },
-    auxiliary: { en: 'Auxiliary',    vi: 'Phụ liệu',    zh: '輔料' },
-    finished:  { en: 'Finished',     vi: 'Thành phẩm',  zh: '成品' },
+  protected readonly typeLabels: Record<string, { vi: string; zh: string }> = {
+    raw:       { vi: 'Nguyên liệu', zh: '原料' },
+    semi:      { vi: 'BTP',         zh: '半成品' },
+    auxiliary: { vi: 'Phụ liệu',   zh: '輔料' },
+    finished:  { vi: 'Thành phẩm', zh: '成品' },
   };
   protected readonly typeCSS: Record<string, string> = {
     raw: 'type-raw', semi: 'type-semi', auxiliary: 'type-aux', finished: 'type-fin',
@@ -217,14 +217,6 @@ export class PlanningInventoryComponent {
   sortBy: SortKey = 'expiry';
 
   t(key: string): string { return this.lang.translate(key); }
-  tl(en: string, vi: string, zh: string): string {
-    const l = this.lang.language();
-    return l === 'vi' ? vi : l === 'zh-TW' ? zh : en;
-  }
-  get locale(): string {
-    const l = this.lang.language();
-    return l === 'vi' ? 'vi-VN' : l === 'zh-TW' ? 'zh-TW' : 'en-US';
-  }
   get isVi(): boolean { return this.lang.language() === 'vi'; }
 
   getDaysLeft(d: string): number { return this.svc.getDaysLeft(d); }
@@ -232,28 +224,25 @@ export class PlanningInventoryComponent {
 
   fmtExpiry(d: string): string {
     if (!d) return '—';
-    return new Date(d).toLocaleDateString(this.locale);
+    return new Date(d).toLocaleDateString(this.isVi ? 'vi-VN' : 'zh-TW');
   }
 
   riskLabel(risk: RiskLevel): string {
-    const map: Record<RiskLevel, [string, string, string]> = {
-      expired: ['EXPIRED',      'HẾT HẠN',       '已過期'],
-      danger:  ['⚠ CRITICAL',   '⚠ NGUY HIỂM',   '⚠ 危險'],
-      warning: ['Monitor',      'Cần theo dõi',   '需關注'],
-      safe:    ['✓ Safe',       '✓ An toàn',      '✓ 安全'],
+    const map: Record<RiskLevel, [string, string]> = {
+      expired: ['HẾT HẠN', '已過期'],
+      danger:  ['⚠ NGUY HIỂM', '⚠ 危險'],
+      warning: ['Cần theo dõi', '需關注'],
+      safe:    ['✓ An toàn', '✓ 安全'],
     };
-    return this.tl(map[risk][0], map[risk][1], map[risk][2]);
+    return this.isVi ? map[risk][0] : map[risk][1];
   }
 
   sorted(): Material[] {
     const filtered = this.svc.getMaterialsByFilter(this.activeTab(), this.search);
-    const lang = this.lang.language();
     return [...filtered].sort((a, b) => {
       if (this.sortBy === 'expiry') return this.getDaysLeft(a.expiryDate) - this.getDaysLeft(b.expiryDate);
       if (this.sortBy === 'stock') return (b.stockWarehouse + b.stockSX1 + b.stockSX2 + b.stockSX4) - (a.stockWarehouse + a.stockSX1 + a.stockSX2 + a.stockSX4);
-      const nameA = lang === 'zh-TW' ? a.nameZH : a.nameVN;
-      const nameB = lang === 'zh-TW' ? b.nameZH : b.nameVN;
-      return nameA.localeCompare(nameB);
+      return (this.isVi ? a.nameVN : a.nameZH).localeCompare(this.isVi ? b.nameVN : b.nameZH);
     });
   }
 
@@ -263,9 +252,9 @@ export class PlanningInventoryComponent {
     const warning = all.filter(m => this.getRisk(this.getDaysLeft(m.expiryDate), m.type) === 'warning');
     const safe    = all.filter(m => this.getRisk(this.getDaysLeft(m.expiryDate), m.type) === 'safe');
     return [
-      { icon: '⚠', css: 'danger', count: danger.length,  label: this.tl('Critical / Expired', 'Nguy hiểm / Hết hạn', '危險 / 已過期'), sub: this.tl('materials need urgent action', 'vật tư cần xử lý ngay', '物料需立即處理') },
-      { icon: '🕐', css: 'warn',  count: warning.length, label: this.tl('Monitor',             'Cần theo dõi',        '需關注'),        sub: this.tl('expiring in 14–45 days',      'hết hạn trong 14–45 ngày', '14–45天內到期') },
-      { icon: '✓',  css: 'safe',  count: safe.length,    label: this.tl('Safe',                'An toàn',             '安全'),          sub: this.tl('materials within date',       'vật tư trong hạn',        '在有效期內的物料') },
+      { icon: '⚠', css: 'danger', count: danger.length,  label: this.isVi ? 'Nguy hiểm / Hết hạn' : '危險 / 已過期', sub: this.isVi ? 'vật tư cần xử lý ngay' : '物料需立即處理' },
+      { icon: '🕐', css: 'warn',  count: warning.length, label: this.isVi ? 'Cần theo dõi' : '需關注',              sub: this.isVi ? 'hết hạn trong 14–45 ngày' : '14–45天內到期' },
+      { icon: '✓',  css: 'safe',  count: safe.length,    label: this.isVi ? 'An toàn' : '安全',                    sub: this.isVi ? 'vật tư trong hạn' : '在有效期內的物料' },
     ];
   }
 }
