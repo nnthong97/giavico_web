@@ -9,6 +9,34 @@ export const appRoutes: Route[] = [
       ),
   },
   {
+    path: 'planning',
+    loadComponent: () =>
+      import('./features/planning/pages/planning-shell.component').then(m => m.PlanningShellComponent),
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/planning/pages/planning-dashboard.component').then(m => m.PlanningDashboardComponent),
+      },
+      {
+        path: 'orders',
+        loadComponent: () => import('./features/planning/pages/planning-orders.component').then(m => m.PlanningOrdersComponent),
+      },
+      {
+        path: 'schedule',
+        loadComponent: () => import('./features/planning/pages/planning-schedule.component').then(m => m.PlanningScheduleComponent),
+      },
+      {
+        path: 'inventory',
+        loadComponent: () => import('./features/planning/pages/planning-inventory.component').then(m => m.PlanningInventoryComponent),
+      },
+      {
+        path: 'delivery',
+        loadComponent: () => import('./features/planning/pages/planning-delivery.component').then(m => m.PlanningDeliveryComponent),
+      },
+    ],
+  },
+  {
     path: 'formulas/:id',
     loadComponent: () =>
       import('./features/formulation/pages/formula-detail.component').then((module) => module.FormulaDetailComponent),
