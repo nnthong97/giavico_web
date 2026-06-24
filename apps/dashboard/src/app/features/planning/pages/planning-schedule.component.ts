@@ -19,12 +19,12 @@ const SLOT_CSS: Record<string, string> = {
       <!-- Header -->
       <div class="page-header">
         <div>
-          <h3>{{ isVi ? 'Lịch Sản Xuất' : '生產排程' }}</h3>
-          <p>{{ isVi ? 'Gantt chart – AV / ND / GV tổng hợp' : '甘特圖 – AV / ND / GV 整合' }}</p>
+          <h3>{{ tl('Production Schedule', 'Lịch Sản Xuất', '生產排程') }}</h3>
+          <p>{{ tl('Gantt chart – AV / ND / GV combined', 'Gantt chart – AV / ND / GV tổng hợp', '甘特圖 – AV / ND / GV 整合') }}</p>
         </div>
         <div class="nav-buttons">
           <button class="nav-btn" (click)="startOffset.set(startOffset() - 7)">‹</button>
-          <button class="nav-btn today-btn" (click)="startOffset.set(-2)">📅 {{ isVi ? 'Hôm nay' : '今天' }}</button>
+          <button class="nav-btn today-btn" (click)="startOffset.set(-2)">📅 {{ tl('Today', 'Hôm nay', '今天') }}</button>
           <button class="nav-btn" (click)="startOffset.set(startOffset() + 7)">›</button>
         </div>
       </div>
@@ -56,11 +56,11 @@ const SLOT_CSS: Record<string, string> = {
           <table class="gantt-table">
             <thead>
               <tr>
-                <th class="machine-col">{{ isVi ? 'Máy / Dây chuyền' : '機台 / 產線' }}</th>
+                <th class="machine-col">{{ tl('Machine / Line', 'Máy / Dây chuyền', '機台 / 產線') }}</th>
                 @for (day of days(); track day.date) {
                   <th colspan="2" [class.today-col]="day.isToday">
                     {{ day.display }}
-                    @if (day.isToday) { <span class="today-badge">{{ isVi ? 'Hôm nay' : '今天' }}</span> }
+                    @if (day.isToday) { <span class="today-badge">{{ tl('Today', 'Hôm nay', '今天') }}</span> }
                   </th>
                 }
               </tr>
@@ -77,7 +77,7 @@ const SLOT_CSS: Record<string, string> = {
                 <tr>
                   <td class="machine-td">
                     <div class="machine-name">{{ machine }}</div>
-                    <div class="machine-sub">{{ isVi ? machineLabels[machine].vi : machineLabels[machine].zh }}</div>
+                    <div class="machine-sub">{{ tl(machineLabels[machine].vi, machineLabels[machine].vi, machineLabels[machine].zh) }}</div>
                   </td>
                   @for (day of days(); track day.date) {
                     @for (shift of ['day', 'night']; track shift) {
@@ -96,7 +96,7 @@ const SLOT_CSS: Record<string, string> = {
                               kg
                             </div>
                             @if (slot.actualQty !== null) {
-                              <div class="slot-plan">{{ isVi ? 'kh:' : '計:' }}{{ slot.plannedQty.toLocaleString() }}</div>
+                              <div class="slot-plan">{{ tl('plan:', 'kh:', '計:') }}{{ slot.plannedQty.toLocaleString() }}</div>
                             }
                           </div>
                         } @else {
@@ -114,19 +114,19 @@ const SLOT_CSS: Record<string, string> = {
 
       <!-- Nata Backward Scheduler -->
       <div class="nata-card">
-        <h4>🌿 {{ isVi ? 'Kế Hoạch Nata – Backward Scheduling' : '椰果計劃 – 反向排程' }}</h4>
-        <p>{{ isVi ? 'Nhập ngày SX thành phẩm → hệ thống tự tính ngày cấy, thu hoạch, gia nhiệt, cắt' : '輸入成品生產日 → 系統自動計算接種、採收、加熱、切割日期' }}</p>
+        <h4>🌿 {{ tl('Nata Backward Scheduler', 'Kế Hoạch Nata – Backward Scheduling', '椰果計劃 – 反向排程') }}</h4>
+        <p>{{ tl('Enter production date → auto-calculate inoculation, harvest, heating, cutting', 'Nhập ngày SX thành phẩm → hệ thống tự tính ngày cấy, thu hoạch, gia nhiệt, cắt', '輸入成品生產日 → 系統自動計算接種、採收、加熱、切割日期') }}</p>
 
         <div class="nata-inputs">
           <div class="input-group">
-            <label>{{ isVi ? 'Ngày SX thành phẩm ND:' : 'ND成品預計生產日:' }}</label>
+            <label>{{ tl('ND Target Production Date:', 'Ngày SX thành phẩm ND:', 'ND成品預計生產日:') }}</label>
             <input type="date" [(ngModel)]="targetDate" class="date-input" />
           </div>
           <div class="input-group">
-            <label>{{ isVi ? 'Số ngày nuôi:' : '培養天數:' }}</label>
+            <label>{{ tl('Cultivation days:', 'Số ngày nuôi:', '培養天數:') }}</label>
             <select [(ngModel)]="nuoiDays" class="sel">
               @for (n of [14,15,16,17,18,19,20,21]; track n) {
-                <option [value]="n">{{ n }} {{ isVi ? 'ngày' : '天' }}</option>
+                <option [value]="n">{{ n }} {{ tl('days', 'ngày', '天') }}</option>
               }
             </select>
           </div>
@@ -134,9 +134,7 @@ const SLOT_CSS: Record<string, string> = {
 
         @if (isPast()) {
           <div class="warn-box">
-            ⚠️ {{ isVi
-              ? 'Ngày cấy cần là ' + fmtDate(nataSteps()[0].date) + ' – đã qua! Không thể kịp cho ngày SX đã chọn.'
-              : '需接種日 ' + fmtDate(nataSteps()[0].date) + ' 已過！無法趕上所選生產日期。' }}
+            ⚠️ {{ tl('Inoculation date ', 'Ngày cấy cần là ', '需接種日 ') + fmtDate(nataSteps()[0].date) + tl(' – already passed! Cannot meet selected production date.', ' – đã qua! Không thể kịp cho ngày SX đã chọn.', ' 已過！無法趕上所選生產日期。') }}
           </div>
         }
 
@@ -261,14 +259,23 @@ export class PlanningScheduleComponent {
   nuoiDays    = signal(18);
 
   t(key: string): string { return this.lang.translate(key); }
+  tl(en: string, vi: string, zh: string): string {
+    const l = this.lang.language();
+    return l === 'vi' ? vi : l === 'zh-TW' ? zh : en;
+  }
+  get locale(): string {
+    const l = this.lang.language();
+    return l === 'vi' ? 'vi-VN' : l === 'zh-TW' ? 'zh-TW' : 'en-US';
+  }
   get isVi(): boolean { return this.lang.language() === 'vi'; }
 
   days = computed(() => {
+    const locale = this.locale;
     return Array.from({ length: 7 }, (_, i) => {
       const dt = new Date(this.svc.todayStr());
       dt.setDate(dt.getDate() + this.startOffset() + i);
       const date = dt.toISOString().split('T')[0];
-      const display = dt.toLocaleDateString(this.isVi ? 'vi-VN' : 'zh-TW', { month: 'short', day: 'numeric', weekday: 'short' });
+      const display = dt.toLocaleDateString(locale, { month: 'short', day: 'numeric', weekday: 'short' });
       return { date, display, isToday: date === this.svc.todayStr() };
     });
   });
@@ -284,19 +291,19 @@ export class PlanningScheduleComponent {
     const doneSlots    = slots.filter(s => s.status === 'done').length;
     const inProgSlots  = slots.filter(s => s.status === 'in-progress').length;
     return [
-      { label: this.isVi ? 'Tổng kế hoạch' : '計劃總量',   value: totalPlanned.toLocaleString() + ' kg', color: '' },
-      { label: this.isVi ? 'Đã thực hiện' : '已完成量',    value: totalActual.toLocaleString() + ' kg',  color: 'blue' },
-      { label: this.isVi ? 'Ca đã hoàn thành' : '已完成班次', value: doneSlots.toString(),               color: 'green' },
-      { label: this.isVi ? 'Đang sản xuất' : '生產中',     value: inProgSlots.toString(),                color: 'yellow' },
+      { label: this.tl('Total planned', 'Tổng kế hoạch', '計劃總量'),       value: totalPlanned.toLocaleString() + ' kg', color: '' },
+      { label: this.tl('Actual output', 'Đã thực hiện', '已完成量'),        value: totalActual.toLocaleString() + ' kg',  color: 'blue' },
+      { label: this.tl('Completed shifts', 'Ca đã hoàn thành', '已完成班次'), value: doneSlots.toString(),               color: 'green' },
+      { label: this.tl('In production', 'Đang sản xuất', '生產中'),         value: inProgSlots.toString(),                color: 'yellow' },
     ];
   }
 
   get statusLegend() {
     return [
-      { label: this.isVi ? 'Kế hoạch' : '計劃',       css: 'slot-planned' },
-      { label: this.isVi ? 'Đang SX' : '進行中',      css: 'slot-inprog' },
-      { label: this.isVi ? 'Hoàn thành' : '已完成',   css: 'slot-done' },
-      { label: this.isVi ? 'Trễ' : '延遲',            css: 'slot-delayed' },
+      { label: this.tl('Planned', 'Kế hoạch', '計劃'),          css: 'slot-planned' },
+      { label: this.tl('In progress', 'Đang SX', '進行中'),     css: 'slot-inprog' },
+      { label: this.tl('Completed', 'Hoàn thành', '已完成'),    css: 'slot-done' },
+      { label: this.tl('Delayed', 'Trễ', '延遲'),               css: 'slot-delayed' },
     ];
   }
 
@@ -308,18 +315,18 @@ export class PlanningScheduleComponent {
   catHatDate   = computed(() => this.subD(this.targetDate(), 1));
 
   nataSteps = computed(() => [
-    { label: this.isVi ? 'Cấy vi sinh' : '接種菌種', date: this.catDate(), color: 'purple', isRange: false },
-    { label: this.isVi ? `Nuôi (${this.nuoiDays()} ngày)` : `培養(${this.nuoiDays()}天)`, date: `${this.fmtDate(this.catDate())} → ${this.fmtDate(this.thuDate())}`, color: 'blue', isRange: true },
-    { label: this.isVi ? 'Thu hoạch' : '採收',      date: this.thuDate(),      color: 'indigo', isRange: false },
-    { label: this.isVi ? 'Gia nhiệt' : '加熱',      date: this.giaNhietDate(), color: 'orange', isRange: false },
-    { label: this.isVi ? 'Cắt hạt lựu' : '切粒',   date: this.catHatDate(),   color: 'yellow', isRange: false },
-    { label: this.isVi ? 'SX thành phẩm' : '成品生產', date: this.targetDate(), color: 'green', isRange: false },
+    { label: this.tl('Inoculation', 'Cấy vi sinh', '接種菌種'), date: this.catDate(), color: 'purple', isRange: false },
+    { label: this.tl(`Cultivation (${this.nuoiDays()}d)`, `Nuôi (${this.nuoiDays()} ngày)`, `培養(${this.nuoiDays()}天)`), date: `${this.fmtDate(this.catDate())} → ${this.fmtDate(this.thuDate())}`, color: 'blue', isRange: true },
+    { label: this.tl('Harvest', 'Thu hoạch', '採收'),           date: this.thuDate(),      color: 'indigo', isRange: false },
+    { label: this.tl('Heating', 'Gia nhiệt', '加熱'),           date: this.giaNhietDate(), color: 'orange', isRange: false },
+    { label: this.tl('Cutting', 'Cắt hạt lựu', '切粒'),        date: this.catHatDate(),   color: 'yellow', isRange: false },
+    { label: this.tl('Production', 'SX thành phẩm', '成品生產'), date: this.targetDate(),  color: 'green', isRange: false },
   ]);
 
   isPastDate(date: string): boolean { return new Date(date) < new Date(this.svc.todayStr()); }
 
   fmtDate(s: string): string {
-    return new Date(s).toLocaleDateString(this.isVi ? 'vi-VN' : 'zh-TW', { day: '2-digit', month: '2-digit', weekday: 'short' });
+    return new Date(s).toLocaleDateString(this.locale, { day: '2-digit', month: '2-digit', weekday: 'short' });
   }
 
   private subD(base: string, n: number): string { return this.svc.addDays(base, -n); }
