@@ -64,7 +64,6 @@ export const PLANNING_SLOTS: ProductionSlot[] = [
   { id: 'ps14', date: d(4), machine: 'RE05', shift: 'day',   orderId: '6', productCode: 'VAV-AI270-HAA-25', productName: 'Nha Đam Lô Hội 25',        productLine: 'AV', plannedQty: 4000, actualQty: null, lotNo: 'L26-RE05-004', status: 'planned' },
 ];
 
-
 export const PLANNING_MACHINES = ['KM07', 'WM01', 'GA01', 'RE05'];
 
 export const PLANNING_MACHINE_LABELS: Record<string, { vi: string; zh: string }> = {
