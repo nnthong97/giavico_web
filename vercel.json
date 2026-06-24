@@ -1,3 +1,6 @@
 {
+  "buildCommand": "npx nx build dashboard --configuration=production",
+  "outputDirectory": "dist/apps/dashboard",
+  "installCommand": "npm install",
   "framework": "angular"
 }
