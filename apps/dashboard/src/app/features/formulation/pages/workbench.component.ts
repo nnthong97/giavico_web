@@ -454,6 +454,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     }
     .page-main {
       min-width: 0;
+      padding-top: 96px;
     }
     .management-menu {
       align-self: start;
@@ -543,12 +544,20 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     }
     .header {
       align-items: center;
-      margin-bottom: 32px;
-      border-bottom: 1px solid #1e293b;
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 16px 32px rgba(2, 6, 23, 0.1);
       display: flex;
       gap: 16px;
       justify-content: space-between;
-      padding-bottom: 16px;
+      left: max(288px, calc(50% - 840px + 288px));
+      margin: 0;
+      padding: 18px 24px;
+      position: fixed;
+      right: max(24px, calc(50% - 840px + 24px));
+      top: 0;
+      z-index: 0;
     }
     .header h1 {
       margin: 0;
@@ -698,6 +707,15 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     @media (max-width: 1024px) {
       .page-shell {
         grid-template-columns: 1fr;
+      }
+      .page-main {
+        padding-top: 96px;
+      }
+      .header {
+        left: 24px;
+        position: fixed;
+        right: 24px;
+        top: 0;
       }
       .management-menu {
         position: static;
@@ -1209,9 +1227,14 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
       font-style: italic;
     }
     @media (max-width: 640px) {
+      .page-main {
+        padding-top: 150px;
+      }
       .header {
         align-items: flex-start;
         flex-direction: column;
+        left: 12px;
+        right: 12px;
       }
       .header-actions {
         flex-wrap: wrap;
@@ -1270,6 +1293,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
       color: #0369a1;
     }
     :host-context(.light-theme) .header {
+      background: #f8fafc;
       border-bottom-color: #d8e0ea;
     }
     :host-context(.light-theme) .subtitle,

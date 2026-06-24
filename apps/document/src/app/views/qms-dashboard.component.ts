@@ -26,13 +26,17 @@ import { QmsDocumentTableComponent } from './qms-shared.components';
     </section>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+
 export class QmsDashboardComponent implements OnInit {
   private readonly service = inject(QmsDocumentController);
   readonly documents = signal<QmsDocument[]>([]);
   readonly cards: { type: QmsDocumentType; label: string; icon: string; tone: string }[] = [
-    { type: 'NEW_PRODUCT_NOTICE', label: 'New Product Notices', icon: 'science', tone: 'green' }, { type: 'CHANGE_PROPOSAL', label: 'Change Proposals', icon: 'change_circle', tone: 'amber' },
-    { type: 'ENGINEERING_CHANGE_REQUEST', label: 'Engineering Changes', icon: 'engineering', tone: 'blue' }, { type: 'RAW_MATERIAL_STANDARD', label: 'Raw Material Standards', icon: 'inventory_2', tone: 'purple' },
-    { type: 'SEMI_FINISHED_STANDARD', label: 'Semi-Finished Standards', icon: 'precision_manufacturing', tone: 'cyan' }, { type: 'FINISHED_PRODUCT_STANDARD', label: 'Finished Product Standards', icon: 'verified', tone: 'rose' },
+    { type: 'NEW_PRODUCT_NOTICE', label: 'New Product Notices', icon: 'science', tone: 'green' }, 
+    { type: 'CHANGE_PROPOSAL', label: 'Change Proposals', icon: 'change_circle', tone: 'amber' },
+    { type: 'ENGINEERING_CHANGE_REQUEST', label: 'Engineering Changes', icon: 'engineering', tone: 'blue' }, 
+    { type: 'RAW_MATERIAL_STANDARD', label: 'Raw Material Standards', icon: 'inventory_2', tone: 'purple' },
+    { type: 'SEMI_FINISHED_STANDARD', label: 'Semi-Finished Standards', icon: 'precision_manufacturing', tone: 'cyan' }, 
+    { type: 'FINISHED_PRODUCT_STANDARD', label: 'Finished Product Standards', icon: 'verified', tone: 'rose' },
   ];
   readonly quickCreate = this.cards.slice(0, 3);
   readonly statusCounts = [
