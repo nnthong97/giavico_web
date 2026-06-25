@@ -40,9 +40,35 @@ interface ChatMessage {
   content: string;
 }
 
+interface GoogleAccountProfile {
+  name: string;
+  email: string;
+  picture: string;
+}
+
+interface OpenAiKeyStatus {
+  configured: boolean;
+  provider: string;
+  model: string;
+}
+
 interface FormattedChatLine {
   kind: 'heading' | 'paragraph' | 'bullet';
   text: string;
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts?: {
+        id?: {
+          initialize: (config: { client_id: string; callback: (response: { credential?: string }) => void }) => void;
+          prompt: () => void;
+          disableAutoSelect: () => void;
+        };
+      };
+    };
+  }
 }
 
 const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
@@ -398,11 +424,74 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
           </ng-template>
 
           <ng-template #utilityContent>
-            <section *ngIf="activeMenu() === 'Chatbot'; else accountOrPlaceholder" class="chatbot-panel card">
+            <section *ngIf="activeMenu() === 'Account'; else chatbotPanel" class="account-panel card">
+              <div class="section-heading">
+                <div>
+                  <h2>{{ t('account') }}</h2>
+                  <p>Sign in with Google and confirm the backend OpenAI key used for AI requests.</p>
+                </div>
+              </div>
+
+              <div class="account-grid">
+                <section class="account-box">
+                  <h3>Google account</h3>
+                  <ng-container *ngIf="googleProfile(); else signedOutAccount">
+                    <div class="account-profile">
+                      <img *ngIf="googleProfile()?.picture" [src]="googleProfile()?.picture" alt="" />
+                      <div>
+                        <strong>{{ googleProfile()?.name }}</strong>
+                        <span>{{ googleProfile()?.email }}</span>
+                      </div>
+                    </div>
+                    <button type="button" class="btn-small" (click)="logoutGoogle()">Sign out</button>
+                  </ng-container>
+                  <ng-template #signedOutAccount>
+                    <label for="googleClientId">Google OAuth Client ID</label>
+                    <input
+                      id="googleClientId"
+                      type="text"
+                      [value]="googleClientId()"
+                      (input)="googleClientId.set($any($event.target).value)"
+                      placeholder="Paste your Google OAuth web client ID"
+                    />
+                    <button type="button" class="btn-generate account-action" (click)="loginWithGoogle()">
+                      Login with Google
+                    </button>
+                    <p class="account-note">{{ googleLoginMessage() }}</p>
+                  </ng-template>
+                </section>
+
+                <section class="account-box">
+                  <h3>OpenAI access</h3>
+                  <div class="status-row">
+                    <span>Status</span>
+                    <strong [class.ready]="openAiKeyStatus()?.configured" [class.missing]="openAiKeyStatus() && !openAiKeyStatus()?.configured">
+                      {{ openAiKeyStatus()?.configured ? 'Configured' : 'Missing' }}
+                    </strong>
+                  </div>
+                  <div class="status-row">
+                    <span>Provider</span>
+                    <strong>{{ openAiKeyStatus()?.provider || 'openai' }}</strong>
+                  </div>
+                  <div class="status-row">
+                    <span>Model</span>
+                    <strong>{{ openAiKeyStatus()?.model || 'Not loaded' }}</strong>
+                  </div>
+                  <p class="account-note">
+                    The OpenAI API key stays on the backend. Set <code>OPENAI_API_KEY</code> before starting the microservices.
+                  </p>
+                  <button type="button" class="btn-small primary" (click)="loadOpenAiKeyStatus()">Refresh status</button>
+                </section>
+              </div>
+            </section>
+          </ng-template>
+
+          <ng-template #chatbotPanel>
+            <section *ngIf="activeMenu() === 'Chatbot'; else placeholderPanel" class="chatbot-panel card">
               <div class="section-heading">
                 <div>
                   <h2>{{ t('chatbot') }}</h2>
-                  <p>Ask Ollama about beverage formulation, stability, Brix, cost, or process constraints.</p>
+                  <p>Ask OpenAI about beverage formulation, stability, Brix, cost, or process constraints.</p>
                 </div>
               </div>
 
@@ -432,44 +521,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
                   placeholder="Ask about acidification, ingredient compatibility, cost projection..."
                 ></textarea>
                 <button type="button" class="btn-generate" [disabled]="chatLoading() || !chatDraft().trim()" (click)="onSendChatMessage()">
-                  {{ chatLoading() ? t('sending') : t('sendToOllama') }}
-                </button>
-              </div>
-            </section>
-          </ng-template>
-
-          <ng-template #accountOrPlaceholder>
-            <section *ngIf="activeMenu() === 'Account'; else placeholderPanel" class="account-panel card">
-              <h2>{{ t('account') }}</h2>
-              <div class="acct-header">
-                <div class="acct-avatar">{{ userInitials() }}</div>
-                <div class="acct-info">
-                  <strong class="acct-name">{{ authService.currentUser()?.displayName }}</strong>
-                  <span class="acct-email">{{ authService.currentUser()?.email }}</span>
-                  <span class="acct-role-badge" [attr.data-role]="authService.currentUser()?.role">
-                    {{ authService.currentUser()?.role }}
-                  </span>
-                </div>
-              </div>
-              <div class="acct-details">
-                <div class="acct-row">
-                  <label>Email</label>
-                  <span>{{ authService.currentUser()?.email }}</span>
-                </div>
-                <div class="acct-row">
-                  <label>{{ t('authMemberSince') }}</label>
-                  <span>{{ authService.currentUser()?.createdAt | date:'dd/MM/yyyy' }}</span>
-                </div>
-                <div class="acct-row">
-                  <label>{{ t('authRoleLabel') }}</label>
-                  <span class="acct-role-badge" [attr.data-role]="authService.currentUser()?.role">
-                    {{ authService.currentUser()?.role }}
-                  </span>
-                </div>
-              </div>
-              <div class="acct-actions">
-                <button type="button" class="btn-logout" (click)="onLogout()">
-                  {{ t('authLogout') }}
+                  {{ chatLoading() ? t('sending') : 'Send to OpenAI' }}
                 </button>
               </div>
             </section>
@@ -606,7 +658,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
       position: fixed;
       right: max(24px, calc(50% - 840px + 24px));
       top: 0;
-      z-index: 0;
+      z-index: 50;
     }
     .header h1 {
       margin: 0;
@@ -666,8 +718,87 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
       margin: -8px 0 18px 0;
     }
     .chatbot-panel,
+    .account-panel,
     .placeholder-panel {
       max-width: 800px;
+    }
+    .account-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .account-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+      padding: 16px;
+    }
+    .account-box h3 {
+      color: #f8fafc;
+      font-size: 0.98rem;
+      margin: 0;
+    }
+    .account-box input {
+      background: #111827;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      color: #f8fafc;
+      font: inherit;
+      padding: 11px 12px;
+      width: 100%;
+    }
+    .account-action {
+      margin-top: 2px;
+    }
+    .account-profile {
+      align-items: center;
+      display: flex;
+      gap: 12px;
+      min-width: 0;
+    }
+    .account-profile img {
+      border-radius: 50%;
+      height: 44px;
+      width: 44px;
+    }
+    .account-profile strong,
+    .account-profile span {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+    .account-profile span,
+    .account-note,
+    .status-row span {
+      color: #94a3b8;
+      font-size: 0.84rem;
+    }
+    .account-note {
+      line-height: 1.5;
+      margin: 0;
+    }
+    .account-note code {
+      color: #38bdf8;
+    }
+    .status-row {
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      padding-bottom: 10px;
+    }
+    .status-row strong {
+      color: #e2e8f0;
+      text-align: right;
+    }
+    .status-row strong.ready {
+      color: #86efac;
+    }
+    .status-row strong.missing {
+      color: #fca5a5;
     }
     .chat-window {
       background: #0f172a;
@@ -1291,6 +1422,9 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
       .menu-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+      .account-grid {
+        grid-template-columns: 1fr;
+      }
       .saved-formula-link,
       .saved-formula-item,
       .output-toolbar {
@@ -1358,8 +1492,10 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
       color: #64748b;
     }
     :host-context(.light-theme) .card,
+    :host-context(.light-theme) .account-box,
     :host-context(.light-theme) input[type="text"],
     :host-context(.light-theme) input[type="number"],
+    :host-context(.light-theme) .account-box input,
     :host-context(.light-theme) textarea {
       background: #ffffff;
       border-color: #cbd5e1;
@@ -1391,6 +1527,14 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     }
     :host-context(.light-theme) .chat-message p {
       color: #334155;
+    }
+    :host-context(.light-theme) .account-note,
+    :host-context(.light-theme) .account-profile span,
+    :host-context(.light-theme) .status-row span {
+      color: #64748b;
+    }
+    :host-context(.light-theme) .status-row {
+      border-color: #e2e8f0;
     }
     :host-context(.light-theme) .chat-heading {
       color: #0f172a;
@@ -1663,6 +1807,10 @@ export class FormulatorWorkbenchComponent implements OnInit {
   public readonly chatLoading = signal(false);
   public readonly chatMessages = signal<ChatMessage[]>(DEFAULT_CHAT_MESSAGES);
   public readonly editingFormulaId = signal<string | null>(null);
+  public readonly googleClientId = signal('');
+  public readonly googleProfile = signal<GoogleAccountProfile | null>(null);
+  public readonly googleLoginMessage = signal('Google login identifies the user. OpenAI requests still use the backend key.');
+  public readonly openAiKeyStatus = signal<OpenAiKeyStatus | null>(null);
   private readonly generatedInput = this.store.selectSignal(selectFormulationInput);
 
   // Form definition matching FormulationInput
@@ -1680,6 +1828,8 @@ export class FormulatorWorkbenchComponent implements OnInit {
   public ngOnInit(): void {
     this.store.dispatch(FormulationActions.loadSavedFormulas());
     this.loadChatHistory();
+    this.restoreGoogleAccount();
+    this.loadOpenAiKeyStatus();
   }
 
   public onGenerate(): void {
@@ -1767,6 +1917,9 @@ export class FormulatorWorkbenchComponent implements OnInit {
 
   public setActiveMenu(menuItem: string): void {
     this.activeMenu.set(menuItem);
+    if (menuItem === 'Account') {
+      this.loadOpenAiKeyStatus();
+    }
   }
 
   public activeMenuLabel(): string {
@@ -1819,7 +1972,7 @@ export class FormulatorWorkbenchComponent implements OnInit {
       },
       error: (error: any) => {
         this.activeMenu.set('Chatbot');
-        const errorMessage = error?.error?.message ?? error?.message ?? 'Unable to reach Ollama through chat-ai-service.';
+        const errorMessage = error?.error?.message ?? error?.message ?? 'Unable to reach the AI service through chat-ai-service.';
         this.updateChatMessages((messages) =>
           messages.map((chatMessage, index) =>
             index === assistantIndex
@@ -1832,6 +1985,46 @@ export class FormulatorWorkbenchComponent implements OnInit {
         );
         this.chatLoading.set(false);
       },
+    });
+  }
+
+  public loginWithGoogle(): void {
+    const clientId = this.googleClientId().trim();
+    if (!clientId) {
+      this.googleLoginMessage.set('Enter your Google OAuth web client ID before signing in.');
+      return;
+    }
+
+    localStorage.setItem('giavico_google_client_id', clientId);
+    this.loadGoogleIdentityScript()
+      .then(() => {
+        if (!window.google?.accounts?.id) {
+          throw new Error('Google Identity Services is unavailable.');
+        }
+
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response) => this.handleGoogleCredential(response.credential ?? ''),
+        });
+        window.google.accounts.id.prompt();
+        this.googleLoginMessage.set('Google login prompt opened. Complete sign-in to continue.');
+      })
+      .catch((error: unknown) => {
+        this.googleLoginMessage.set(error instanceof Error ? error.message : 'Unable to load Google login.');
+      });
+  }
+
+  public logoutGoogle(): void {
+    window.google?.accounts?.id?.disableAutoSelect();
+    this.googleProfile.set(null);
+    localStorage.removeItem('giavico_google_profile');
+    this.googleLoginMessage.set('Signed out of Google in this browser.');
+  }
+
+  public loadOpenAiKeyStatus(): void {
+    this.ollamaService.getOpenAiKeyStatus().subscribe({
+      next: (status) => this.openAiKeyStatus.set(status),
+      error: () => this.openAiKeyStatus.set({ configured: false, provider: 'openai', model: 'Unavailable' }),
     });
   }
 
@@ -2001,6 +2194,72 @@ export class FormulatorWorkbenchComponent implements OnInit {
         this.chatMessages.set(DEFAULT_CHAT_MESSAGES);
       },
     });
+  }
+
+  private restoreGoogleAccount(): void {
+    const clientId = localStorage.getItem('giavico_google_client_id');
+    if (clientId) {
+      this.googleClientId.set(clientId);
+    }
+
+    const profileJson = localStorage.getItem('giavico_google_profile');
+    if (!profileJson) {
+      return;
+    }
+
+    try {
+      this.googleProfile.set(JSON.parse(profileJson) as GoogleAccountProfile);
+      this.googleLoginMessage.set('Google account restored for this browser session.');
+    } catch {
+      localStorage.removeItem('giavico_google_profile');
+    }
+  }
+
+  private loadGoogleIdentityScript(): Promise<void> {
+    if (window.google?.accounts?.id) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      const existingScript = document.querySelector<HTMLScriptElement>('script[src="https://accounts.google.com/gsi/client"]');
+      if (existingScript) {
+        existingScript.addEventListener('load', () => resolve(), { once: true });
+        existingScript.addEventListener('error', () => reject(new Error('Unable to load Google login script.')), { once: true });
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Unable to load Google login script.'));
+      document.head.appendChild(script);
+    });
+  }
+
+  private handleGoogleCredential(credential: string): void {
+    if (!credential) {
+      this.googleLoginMessage.set('Google did not return a credential.');
+      return;
+    }
+
+    try {
+      const [, payload] = credential.split('.');
+      const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const decodedPayload = JSON.parse(decodeURIComponent(escape(atob(normalizedPayload))));
+      const profile: GoogleAccountProfile = {
+        name: decodedPayload.name ?? 'Google user',
+        email: decodedPayload.email ?? '',
+        picture: decodedPayload.picture ?? '',
+      };
+
+      this.googleProfile.set(profile);
+      localStorage.setItem('giavico_google_profile', JSON.stringify(profile));
+      this.googleLoginMessage.set('Google login completed. AI requests will use the backend OpenAI key.');
+    } catch {
+      this.googleLoginMessage.set('Google credential could not be decoded.');
+    }
   }
 
   private patchFormFromSavedFormula(savedFormula: SavedBeverageFormula): void {
