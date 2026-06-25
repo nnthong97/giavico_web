@@ -256,8 +256,19 @@ const STATUS_CSS: Record<string, string> = {
     :host-context(.dark-theme) .bar-label,
     :host-context(.dark-theme) .legend-planned,
     :host-context(.dark-theme) .legend-actual { color: #94a3b8; }
+
+    /* Alert cards – dark mode: tối nền, giữ màu sắc đặc trưng */
+    :host-context(.dark-theme) .alert-card.danger   { background: #2d0a0a; border-color: #7f1d1d; }
+    :host-context(.dark-theme) .alert-card.safe     { background: #052e16; border-color: #14532d; }
+    :host-context(.dark-theme) .alert-card.warn     { background: #1c0e00; border-color: #7c2d12; }
+    :host-context(.dark-theme) .alert-card.info     { background: #0c1a3f; border-color: #1e3a5f; }
+    :host-context(.dark-theme) .alert-card.warn-soft { background: #1c1a00; border-color: #713f12; }
     :host-context(.dark-theme) .alert-head { color: #e2e8f0; }
-    :host-context(.dark-theme) .alert-num { color: #f8fafc; }
+    :host-context(.dark-theme) .alert-num  { color: #f8fafc; }
+    :host-context(.dark-theme) .alert-sub  { color: #94a3b8; }
+    :host-context(.dark-theme) .text-warn  { color: #fbbf24; }
+    :host-context(.dark-theme) .text-info  { color: #60a5fa; }
+    :host-context(.dark-theme) .progress-bar { background: rgba(255,255,255,.1); }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
