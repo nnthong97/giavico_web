@@ -8,7 +8,7 @@
       "!{projectRoot}/.eslintrc.json",
       "!{projectRoot}/eslint.config.mjs"
     ],
-    "sharedGlobals": []
+    "sharedGlobals": ["{workspaceRoot}/.github/workflows/ci.yml"]
   },
   "targetDefaults": {
     "@angular/build:application": {
@@ -35,5 +35,6 @@
       "style": "css",
       "unitTestRunner": "none"
     }
-  }
+  },
+  "nxCloudId": "6a3ce26386a45947b3f2300b"
 }
