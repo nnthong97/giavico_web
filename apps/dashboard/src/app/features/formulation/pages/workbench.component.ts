@@ -18,6 +18,7 @@ import {
 import { BeverageFormula, FormulationInput, SavedBeverageFormula } from '../models/formulation.model';
 import { ThemeService } from '../../../core/theme/theme.service';
 import { ProcessGeneralComponent } from '../../process-general/pages/process-general.component';
+import { RndDocumentListComponent } from '../../rnd-documents/pages/rnd-document-list.component';
 import { OllamaFormulationService } from '../data-access/ollama-formulation.service';
 import { AppLanguage, LanguageService } from '../../../core/i18n/language.service';
 
@@ -80,7 +81,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
 @Component({
   selector: 'app-formulator-workbench',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, ProcessGeneralComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ProcessGeneralComponent, RndDocumentListComponent],
   template: `
     <div class="workbench-container">
       <div class="page-shell">
@@ -102,10 +103,15 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
               <span>FM</span>
               {{ t('formulaManagement') }}
             </button>
-            <a routerLink="/documents" class="menu-item">
+            <button
+              type="button"
+              class="menu-item"
+              [class.active]="activeMenu() === 'R&D Documents'"
+              (click)="setActiveMenu('R&D Documents')"
+            >
               <span>DC</span>
               {{ t('rndDocuments') }}
-            </a>
+            </button>
             <button
               type="button"
               class="menu-item"
@@ -166,8 +172,8 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
         <main class="page-main">
           <header class="header">
             <div>
-              <h1>{{ activeMenu() === 'Process general' ? t('processGeneral') : t('workbenchTitle') }}</h1>
-              <p class="subtitle">{{ activeMenu() === 'Process general' ? t('processGeneralSubtitle') : t('workbenchSubtitle') }}</p>
+              <h1>{{ activePageTitle() }}</h1>
+              <p class="subtitle">{{ activePageSubtitle() }}</p>
             </div>
             <div class="header-actions">
               <label class="language-select">
@@ -408,6 +414,10 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
           </ng-container>
 
           <ng-template #utilityPanel>
+            <app-rnd-document-list *ngIf="activeMenu() === 'R&D Documents'; else processPanel" [embedded]="true" />
+          </ng-template>
+
+          <ng-template #processPanel>
             <app-process-general *ngIf="activeMenu() === 'Process general'; else utilityContent" />
           </ng-template>
 
@@ -877,13 +887,12 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
         grid-template-columns: 1fr;
       }
       .page-main {
-        padding-top: 96px;
+        padding-top: 0;
       }
       .header {
-        left: 24px;
-        position: fixed;
-        right: 24px;
-        top: 0;
+        left: auto;
+        position: static;
+        right: auto;
       }
       .management-menu {
         position: static;
@@ -1396,13 +1405,11 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     }
     @media (max-width: 640px) {
       .page-main {
-        padding-top: 150px;
+        padding-top: 0;
       }
       .header {
         align-items: flex-start;
         flex-direction: column;
-        left: 12px;
-        right: 12px;
       }
       .header-actions {
         flex-wrap: wrap;
@@ -1720,6 +1727,7 @@ export class FormulatorWorkbenchComponent implements OnInit {
   public activeMenuLabel(): string {
     const menuTranslations: Record<string, string> = {
       'Formula management': this.t('formulaManagement'),
+      'R&D Documents': this.t('rndDocuments'),
       'Process general': this.t('processGeneral'),
       Settings: this.t('settings'),
       Account: this.t('account'),
@@ -1729,6 +1737,30 @@ export class FormulatorWorkbenchComponent implements OnInit {
     };
 
     return menuTranslations[this.activeMenu()] ?? this.activeMenu();
+  }
+
+  public activePageTitle(): string {
+    if (this.activeMenu() === 'Process general') {
+      return this.t('processGeneral');
+    }
+
+    if (this.activeMenu() === 'R&D Documents') {
+      return this.t('rndDocuments');
+    }
+
+    return this.t('workbenchTitle');
+  }
+
+  public activePageSubtitle(): string {
+    if (this.activeMenu() === 'Process general') {
+      return this.t('processGeneralSubtitle');
+    }
+
+    if (this.activeMenu() === 'R&D Documents') {
+      return this.t('documentControlSubtitle');
+    }
+
+    return this.t('workbenchSubtitle');
   }
 
   public onSendChatMessage(): void {
@@ -1767,7 +1799,7 @@ export class FormulatorWorkbenchComponent implements OnInit {
       },
       error: (error: any) => {
         this.activeMenu.set('Chatbot');
-        const errorMessage = error?.error?.message ?? error?.message ?? 'Unable to reach the AI service through chat-ai-service.';
+        const errorMessage = error?.error?.message ?? error?.message ?? 'Unable to reach the Giavico AI API.';
         this.updateChatMessages((messages) =>
           messages.map((chatMessage, index) =>
             index === assistantIndex

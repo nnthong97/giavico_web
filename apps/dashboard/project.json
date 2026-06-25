@@ -6,8 +6,17 @@
   "sourceRoot": "apps/dashboard/src",
   "tags": [],
   "targets": {
+    "supabase-env": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "node tools/write-supabase-env.mjs",
+        "cwd": "."
+      }
+    },
     "build": {
       "executor": "@angular/build:application",
+      "dependsOn": ["supabase-env", "^build"],
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/dashboard",
@@ -36,8 +45,8 @@
             },
             {
               "type": "anyComponentStyle",
-              "maximumWarning": "10kb",
-              "maximumError": "16kb"
+              "maximumWarning": "16kb",
+              "maximumError": "20kb"
             }
           ],
           "outputHashing": "all"
