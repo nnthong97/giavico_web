@@ -1,4 +1,6 @@
-const giavicoApiGatewayBaseUrl = 'http://localhost:8080';
+const isLocalDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
+const giavicoApiGatewayBaseUrl = isLocalDev ? 'http://localhost:8080' : '/api';
 
 export const GIAVICO_API_DOMAINS = {
   gateway: giavicoApiGatewayBaseUrl,
@@ -9,8 +11,8 @@ export const GIAVICO_API_DOMAINS = {
 } as const;
 
 export const GIAVICO_GATEWAY_API_DOMAINS = {
-  formula: `${giavicoApiGatewayBaseUrl}/api/formulas`,
-  inventory: `${giavicoApiGatewayBaseUrl}/api/inventory`,
-  chat: `${giavicoApiGatewayBaseUrl}/api/chat`,
+  formula:      `${giavicoApiGatewayBaseUrl}/api/formulas`,
+  inventory:    `${giavicoApiGatewayBaseUrl}/api/inventory`,
+  chat:         `${giavicoApiGatewayBaseUrl}/api/chat`,
   rndDocuments: `${giavicoApiGatewayBaseUrl}/api/rnd-documents`,
-} as const;
+};
