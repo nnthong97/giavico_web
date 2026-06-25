@@ -18,6 +18,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'planning',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/planning/pages/planning-shell.component').then(m => m.PlanningShellComponent),
     children: [
