@@ -29,14 +29,15 @@ export class OllamaFormulationService {
   private readonly defaultChatApiUrl = GIAVICO_API_DOMAINS.chat;
   private readonly defaultChatStreamApiUrl = `${GIAVICO_API_DOMAINS.chat}/stream`;
   private readonly defaultChatMessagesApiUrl = `${GIAVICO_API_DOMAINS.chat}/messages`;
+  private readonly defaultAccountOpenAiKeyStatusUrl = `${GIAVICO_API_DOMAINS.chat}/account/openai-key/status`;
 
   /**
-   * Generates a structured beverage formula by compiling parameters and sending the payload to Ollama.
+   * Generates a structured beverage formula through the configured AI provider.
    *
    * @param input User-defined target conditions and operational constraints.
    * @param historicalData Optional historical formulation data (BOM structures) to anchor formulation changes.
    * @param model Override the default LLM model name.
-   * @param apiUrl Override the default Ollama API URL.
+   * @param apiUrl Override the default formula generation API URL.
    */
   public generateFormula(
     input: FormulationInput,
@@ -147,6 +148,12 @@ export class OllamaFormulationService {
     return this.http.delete<void>(apiUrl);
   }
 
+  public getOpenAiKeyStatus(
+    apiUrl: string = this.defaultAccountOpenAiKeyStatusUrl
+  ): Observable<{ configured: boolean; provider: string; model: string }> {
+    return this.http.get<{ configured: boolean; provider: string; model: string }>(apiUrl);
+  }
+
   public chatStream(
     message: string,
     apiUrl: string = this.defaultChatStreamApiUrl
@@ -249,7 +256,7 @@ export class OllamaFormulationService {
         }
 
         if (!response.body) {
-          throw new Error('Ollama response did not include a readable stream.');
+          throw new Error('AI response did not include a readable stream.');
         }
 
         const reader = response.body.getReader();
