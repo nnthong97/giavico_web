@@ -38,9 +38,19 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# local environment files
+.env
+.env.*
+!.env.example
+
 .nx/cache
 .nx/workspace-data
 .claude/worktrees
 .claude/settings.local.json
 
 .angular
+
+# generated from Vercel/Supabase environment variables
+apps/dashboard/src/app/core/supabase/supabase.generated.ts
+.vercel
+.env*
