@@ -80,16 +80,28 @@ export class RndDocumentDetailComponent implements OnInit {
   };
 
   public ngOnInit(): void { this.load(); }
+
   public load(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    if (!id) { this.error.set(this.t('documentUnavailable')); return; }
+    if (!id) { 
+      this.error.set(this.t('documentUnavailable')); return; 
+    }
     this.loading.set(true); this.error.set('');
     this.service.get(id).pipe(
       switchMap((item) => forkJoin({ item: of(item), template: this.service.getTemplate(item.type) })),
       finalize(() => this.loading.set(false))
-    ).subscribe({ next: ({ item, template }) => { this.document.set(item); this.template.set(template); }, error: (error) => this.error.set(error?.error?.message ?? error?.message ?? this.t('unknownError')) });
+    ).subscribe({ 
+      next: ({ item, template }) => { 
+        this.document.set(item); 
+        this.template.set(template); 
+      }, 
+      error: (error) => this.error.set(
+        error?.error?.message ?? error?.message ?? this.t('unknownError')) 
+    });
   }
+
   public actions(): WorkflowAction[] { const item = this.document(); return item ? this.actionMap[item.status] ?? [] : []; }
+
   public runAction(action: WorkflowAction, role?: string): void {
     const item = this.document(); if (!item) return;
     const comment = this.browserDocument.defaultView?.prompt(this.t('workflowCommentPrompt')) ?? '';
