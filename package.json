@@ -3,10 +3,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "env:supabase": "node tools/write-supabase-env.mjs",
-    "ci:lint": "npm run env:supabase && nx run-many -t lint --all",
-    "ci:build": "npm run env:supabase && nx run-many -t build --all --configuration=production",
-    "ci:build:deploy": "npm run env:supabase && nx build dashboard --configuration=production --base-href=/dashboard/ && nx build document --configuration=production --base-href=/document/ && nx build inventory --configuration=production --base-href=/inventory/",
+    "ci:lint": "nx run-many -t lint --all",
+    "ci:build": "nx run-many -t build --all --configuration=production",
+    "ci:build:deploy": "nx build dashboard --configuration=production --base-href=/dashboard/ && nx build document --configuration=production --base-href=/document/ && nx build inventory --configuration=production --base-href=/inventory/",
     "ci": "npm run ci:lint && npm run ci:build"
   },
   "private": true,
@@ -25,7 +24,6 @@
     "@angular/ssr": "~21.2.0",
     "@ngrx/effects": "^21.1.1",
     "@ngrx/store": "^21.1.1",
-    "@supabase/supabase-js": "^2.108.2",
     "express": "^4.21.2",
     "rxjs": "~7.8.0"
   },

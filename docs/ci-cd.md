@@ -25,8 +25,6 @@ The workflow builds all three Angular apps and prepares this static bundle:
 
 Deployment builds use folder-specific base paths, so the apps are expected to be served from `/dashboard/`, `/document/`, and `/inventory/`.
 
-If the dashboard uses Supabase, configure `SUPABASE_URL` and `SUPABASE_ANON_KEY` in the hosting environment before the build runs. See [Supabase on Vercel](./supabase-vercel.md).
-
 To enable automatic SSH deployment, configure these repository or environment secrets:
 
 - `SSH_HOST`: deployment server hostname or IP address

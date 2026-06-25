@@ -6,17 +6,9 @@
   "sourceRoot": "apps/dashboard/src",
   "tags": [],
   "targets": {
-    "supabase-env": {
-      "executor": "nx:run-commands",
-      "cache": false,
-      "options": {
-        "command": "node tools/write-supabase-env.mjs",
-        "cwd": "."
-      }
-    },
     "build": {
       "executor": "@angular/build:application",
-      "dependsOn": ["supabase-env", "^build"],
+      "dependsOn": ["^build"],
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/dashboard",
