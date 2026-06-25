@@ -49,6 +49,9 @@ Thumbs.db
 .claude/settings.local.json
 
 .angular
+<<<<<<< HEAD
 
 .vercel
 .env*
+=======
+>>>>>>> 59bbc5e (fix: restore vercel.json to repo so Vercel can read build config)
