@@ -44,6 +44,3 @@ Thumbs.db
 .claude/settings.local.json
 
 .angular
-
-# Vercel config (local deploy only)
-vercel.json
