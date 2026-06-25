@@ -99,10 +99,10 @@ export class FormulationEffects {
 
   private toErrorMessage(error: any): string {
     if (error.name === 'TimeoutError') {
-      return 'AI request timed out (limit: 45 seconds). Check the formula-service logs or increase the service timeout.';
+      return 'AI request timed out (limit: 45 seconds). Check the Giavico API logs or increase the service timeout.';
     }
     if (error?.status === 0) {
-      return 'Cannot connect to formula-service. Ensure it is running at http://localhost:8081 and CORS allows this app origin.';
+      return 'Cannot connect to Giavico API. Ensure the monolith is running at http://localhost:8080 and CORS allows this app origin.';
     }
     if (error instanceof HttpErrorResponse && error.error?.message) {
       const fieldErrors = error.error.fieldErrors

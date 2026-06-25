@@ -50,7 +50,7 @@ export class OllamaFormulationService {
         try {
           return this.validateAndNormalizeFormula(response);
         } catch (error) {
-          throw new Error(`Failed to normalize formula-service response as BeverageFormula: ${error instanceof Error ? error.message : String(error)}`);
+          throw new Error(`Failed to normalize the Giavico API response as BeverageFormula: ${error instanceof Error ? error.message : String(error)}`);
         }
       })
     );
@@ -426,7 +426,7 @@ export class OllamaFormulationService {
     }
 
     if (event === 'ollama-error' || event === 'stream-parse-error') {
-      throw new Error(data || 'formula-service returned a streaming error.');
+      throw new Error(data || 'Giavico API returned a formula streaming error.');
     }
 
     const nextResponse = currentResponse + data;
@@ -459,7 +459,7 @@ export class OllamaFormulationService {
     }
 
     if (event === 'ollama-error' || event === 'stream-parse-error') {
-      throw new Error(data || 'chat-ai-service returned a chatbot streaming error.');
+      throw new Error(data || 'Giavico API returned a chatbot streaming error.');
     }
 
     const nextResponse = currentResponse + this.getChatChunkSeparator(currentResponse, data) + data;
@@ -553,7 +553,7 @@ export class OllamaFormulationService {
       });
       observer.complete();
     } catch (error) {
-      throw new Error(`Failed to parse streamed formula-service response as BeverageFormula JSON: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Failed to parse the streamed Giavico API response as BeverageFormula JSON: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
