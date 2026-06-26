@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostBinding, Input, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -13,8 +13,8 @@ import { RndDocumentHeaderComponent } from '../ui/rnd-document-header.component'
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, RndDocumentHeaderComponent],
   template: `
-    <div class="document-app">
-      <app-rnd-document-header />
+    <div class="document-app" [class.embedded]="embedded">
+      <app-rnd-document-header *ngIf="!embedded" />
       <main class="document-page">
         <div class="page-title-row">
           <div><span class="eyebrow">{{ t('documentControl') }}</span><h1>{{ t('rndDocuments') }}</h1><p>{{ t('documentControlSubtitle') }}</p></div>
@@ -55,6 +55,9 @@ import { RndDocumentHeaderComponent } from '../ui/rnd-document-header.component'
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RndDocumentListComponent implements OnInit {
+  @Input() public embedded = false;
+  @HostBinding('class.embedded-mode') public get embeddedMode(): boolean { return this.embedded; }
+
   private readonly service = inject(RndDocumentService);
   private readonly language = inject(LanguageService);
   public readonly documents = signal<RndDocumentSummary[]>([]);

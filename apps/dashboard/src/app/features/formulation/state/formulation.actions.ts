@@ -30,7 +30,7 @@ export const FormulationActions = createActionGroup({
       error: string; 
     }>(),
 
-    // Fetch persisted formulas from formula-service through gateway-service.
+    // Fetch persisted formulas from the Giavico monolith API.
     'Load Saved Formulas': emptyProps(),
 
     'Load Saved Formulas Success': props<{

@@ -29,14 +29,15 @@ export class OllamaFormulationService {
   private readonly defaultChatApiUrl = GIAVICO_API_DOMAINS.chat;
   private readonly defaultChatStreamApiUrl = `${GIAVICO_API_DOMAINS.chat}/stream`;
   private readonly defaultChatMessagesApiUrl = `${GIAVICO_API_DOMAINS.chat}/messages`;
+  private readonly defaultAccountOpenAiKeyStatusUrl = `${GIAVICO_API_DOMAINS.chat}/account/openai-key/status`;
 
   /**
-   * Generates a structured beverage formula by compiling parameters and sending the payload to Ollama.
+   * Generates a structured beverage formula through the configured AI provider.
    *
    * @param input User-defined target conditions and operational constraints.
    * @param historicalData Optional historical formulation data (BOM structures) to anchor formulation changes.
    * @param model Override the default LLM model name.
-   * @param apiUrl Override the default Ollama API URL.
+   * @param apiUrl Override the default formula generation API URL.
    */
   public generateFormula(
     input: FormulationInput,
@@ -49,7 +50,7 @@ export class OllamaFormulationService {
         try {
           return this.validateAndNormalizeFormula(response);
         } catch (error) {
-          throw new Error(`Failed to normalize formula-service response as BeverageFormula: ${error instanceof Error ? error.message : String(error)}`);
+          throw new Error(`Failed to normalize the Giavico API response as BeverageFormula: ${error instanceof Error ? error.message : String(error)}`);
         }
       })
     );
@@ -145,6 +146,12 @@ export class OllamaFormulationService {
     apiUrl: string = this.defaultChatMessagesApiUrl
   ): Observable<void> {
     return this.http.delete<void>(apiUrl);
+  }
+
+  public getOpenAiKeyStatus(
+    apiUrl: string = this.defaultAccountOpenAiKeyStatusUrl
+  ): Observable<{ configured: boolean; provider: string; model: string }> {
+    return this.http.get<{ configured: boolean; provider: string; model: string }>(apiUrl);
   }
 
   public chatStream(
@@ -249,7 +256,7 @@ export class OllamaFormulationService {
         }
 
         if (!response.body) {
-          throw new Error('Ollama response did not include a readable stream.');
+          throw new Error('AI response did not include a readable stream.');
         }
 
         const reader = response.body.getReader();
@@ -419,7 +426,7 @@ export class OllamaFormulationService {
     }
 
     if (event === 'ollama-error' || event === 'stream-parse-error') {
-      throw new Error(data || 'formula-service returned a streaming error.');
+      throw new Error(data || 'Giavico API returned a formula streaming error.');
     }
 
     const nextResponse = currentResponse + data;
@@ -452,7 +459,7 @@ export class OllamaFormulationService {
     }
 
     if (event === 'ollama-error' || event === 'stream-parse-error') {
-      throw new Error(data || 'chat-ai-service returned a chatbot streaming error.');
+      throw new Error(data || 'Giavico API returned a chatbot streaming error.');
     }
 
     const nextResponse = currentResponse + this.getChatChunkSeparator(currentResponse, data) + data;
@@ -546,7 +553,7 @@ export class OllamaFormulationService {
       });
       observer.complete();
     } catch (error) {
-      throw new Error(`Failed to parse streamed formula-service response as BeverageFormula JSON: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(`Failed to parse the streamed Giavico API response as BeverageFormula JSON: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
