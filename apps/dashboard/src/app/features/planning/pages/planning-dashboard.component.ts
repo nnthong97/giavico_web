@@ -19,7 +19,7 @@ const STATUS_CSS: Record<string, string> = {
       <!-- Page header -->
       <div class="dash-header">
         <div>
-          <h3>{{ tl('System Overview', 'Tổng Quan Hệ Thống', '系統總覽') }}</h3>
+          <h3>{{ tl('System Overview', 'Tổng Quan Hệ Thống Giavico', '系統總覽') }}</h3>
           <p>{{ tl('Updated: ', 'Cập nhật: ', '更新：') + todayStr }}</p>
         </div>
       </div>
