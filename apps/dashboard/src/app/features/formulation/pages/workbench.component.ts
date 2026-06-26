@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -21,6 +21,7 @@ import { ProcessGeneralComponent } from '../../process-general/pages/process-gen
 import { RndDocumentListComponent } from '../../rnd-documents/pages/rnd-document-list.component';
 import { OllamaFormulationService } from '../data-access/ollama-formulation.service';
 import { AppLanguage, LanguageService } from '../../../core/i18n/language.service';
+import { AuthService } from '../../../core/auth/auth.service';
 
 type StreamStepStatus = 'done' | 'active' | 'waiting';
 
@@ -111,7 +112,11 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
             >
               <span>DC</span>
               {{ t('rndDocuments') }}
-            </button>
+            </a>
+            <a routerLink="/planning" class="menu-item">
+              <span>PL</span>
+              {{ t('planNav') }}
+            </a>
             <button
               type="button"
               class="menu-item"
@@ -167,6 +172,13 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
               {{ t('help') }}
             </button>
           </nav>
+          <button type="button" class="user-mini" *ngIf="authService.currentUser() as user" (click)="setActiveMenu('Account')">
+            <div class="user-mini-avatar">{{ userInitials() }}</div>
+            <div class="user-mini-text">
+              <strong>{{ user.displayName }}</strong>
+              <span>{{ user.email }}</span>
+            </div>
+          </button>
         </aside>
 
         <main class="page-main">
@@ -1589,6 +1601,183 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     :host-context(.light-theme) .empty-state {
       color: #64748b;
     }
+
+    /* ── Sidebar user mini-card ── */
+    button.user-mini {
+      /* button reset */
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: inherit;
+      text-align: left;
+      width: 100%;
+      /* layout */
+      align-items: center;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      overflow: hidden;
+      padding: 10px 12px;
+      transition: border-color .18s, background .18s;
+    }
+    button.user-mini:hover { background: #0f172a; border-color: #334155; }
+    .user-mini-avatar {
+      align-items: center;
+      background: linear-gradient(135deg, #0284c7, #4f46e5);
+      border-radius: 8px;
+      color: #fff;
+      display: inline-flex;
+      flex-shrink: 0;
+      font-size: .72rem;
+      font-weight: 800;
+      height: 34px;
+      justify-content: center;
+      width: 34px;
+    }
+    .user-mini-text {
+      min-width: 0;
+      overflow: hidden;
+    }
+    .user-mini-text strong {
+      color: #f1f5f9;
+      display: block;
+      font-size: .82rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .user-mini-text span {
+      color: #64748b;
+      display: block;
+      font-size: .72rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Account panel ── */
+    .account-panel { max-width: 560px; }
+    .acct-header {
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding: 16px 18px;
+    }
+    .acct-avatar {
+      align-items: center;
+      background: linear-gradient(135deg, #0284c7, #4f46e5);
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(2,132,199,.35);
+      color: #fff;
+      display: inline-flex;
+      flex-shrink: 0;
+      font-size: 1.15rem;
+      font-weight: 900;
+      height: 56px;
+      justify-content: center;
+      width: 56px;
+    }
+    .acct-info { min-width: 0; }
+    .acct-name {
+      color: #f8fafc;
+      display: block;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .acct-email {
+      color: #64748b;
+      display: block;
+      font-size: .82rem;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .acct-role-badge {
+      border-radius: 999px;
+      display: inline-block;
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+      margin-top: 6px;
+      padding: 3px 10px;
+      text-transform: uppercase;
+    }
+    .acct-role-badge[data-role="admin"]   { background: rgba(239,68,68,.18);  border: 1px solid rgba(239,68,68,.5);  color: #fca5a5; }
+    .acct-role-badge[data-role="manager"] { background: rgba(234,179,8,.15);  border: 1px solid rgba(234,179,8,.4);  color: #fef08a; }
+    .acct-role-badge[data-role="viewer"]  { background: rgba(59,130,246,.15); border: 1px solid rgba(59,130,246,.4); color: #93c5fd; }
+    .acct-details {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .acct-row {
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      padding: 12px 16px;
+    }
+    .acct-row:last-child { border-bottom: none; }
+    .acct-row label {
+      color: #64748b;
+      flex-shrink: 0;
+      font-size: .82rem;
+      font-weight: 600;
+      min-width: 110px;
+    }
+    .acct-row span {
+      color: #cbd5e1;
+      font-size: .88rem;
+      text-align: right;
+      word-break: break-all;
+    }
+    .acct-actions { margin-top: 4px; }
+    .btn-logout {
+      align-items: center;
+      background: transparent;
+      border: 1px solid rgba(248,113,113,.45);
+      border-radius: 8px;
+      color: #fca5a5;
+      cursor: pointer;
+      display: inline-flex;
+      font-size: .88rem;
+      font-weight: 700;
+      gap: 6px;
+      padding: 10px 16px;
+      transition: background .18s, border-color .18s;
+      width: 100%;
+      justify-content: center;
+    }
+    .btn-logout:hover {
+      background: rgba(127,29,29,.35);
+      border-color: #ef4444;
+      color: #f87171;
+    }
+
+    /* ── Light theme overrides ── */
+    :host-context(.light-theme) button.user-mini { border-color: #e2e8f0; }
+    :host-context(.light-theme) button.user-mini:hover { background: #f1f5f9; border-color: #94a3b8; }
+    :host-context(.light-theme) .user-mini-text strong { color: #0f172a; }
+    :host-context(.light-theme) .user-mini-text span   { color: #94a3b8; }
+    :host-context(.light-theme) .acct-header,
+    :host-context(.light-theme) .acct-details { background: #f8fafc; border-color: #e2e8f0; }
+    :host-context(.light-theme) .acct-row { border-bottom-color: #e2e8f0; }
+    :host-context(.light-theme) .acct-row label { color: #94a3b8; }
+    :host-context(.light-theme) .acct-row span { color: #334155; }
+    :host-context(.light-theme) .acct-name { color: #0f172a; }
+    :host-context(.light-theme) .acct-email { color: #94a3b8; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -1598,6 +1787,8 @@ export class FormulatorWorkbenchComponent implements OnInit {
   private readonly ollamaService = inject(OllamaFormulationService);
   public readonly themeService = inject(ThemeService);
   public readonly languageService = inject(LanguageService);
+  public readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   // Expose selectors using Angular's async pipe in the template
   public readonly formula$ = this.store.select(selectBeverageFormula);
@@ -1707,6 +1898,20 @@ export class FormulatorWorkbenchComponent implements OnInit {
 
   public toggleTheme(): void {
     this.themeService.toggleTheme();
+  }
+
+  public onLogout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
+  public userInitials(): string {
+    const name = this.authService.currentUser()?.displayName ?? '';
+    if (!name) return 'G';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
   }
 
   public setLanguage(language: AppLanguage): void {
