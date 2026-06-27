@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { defer, forkJoin, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import {
+  AiModelSelection,
   ApiPage,
   BeverageFormula,
   ChatHistoryMessage,
@@ -15,12 +16,45 @@ import {
   SavedBeverageFormula,
 } from '../models/formulation.model';
 import { GIAVICO_API_DOMAINS } from '../../../core/config/giavico-api-domains';
+import {
+  DEFAULT_CHAT_AI_MODEL,
+  DEFAULT_DEMO_GEMINI_API_KEY,
+  DEMO_GEMINI_API_KEY_STORAGE_KEY,
+  chooseGeminiModel,
+} from './ai-model-options';
+
+type AiRequestMetadata = AiModelSelection & {
+  aiProvider: AiModelSelection['provider'];
+};
+
+type AiFormulationRequest = FormulationInput & AiRequestMetadata;
+
+type AiChatRequest = {
+  message: string;
+} & AiRequestMetadata;
+
+interface GeminiGenerateContentResponse {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{
+        text?: string;
+      }>;
+    };
+  }>;
+  promptFeedback?: {
+    blockReason?: string;
+  };
+  error?: {
+    message?: string;
+  };
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class OllamaFormulationService {
   private readonly http = inject(HttpClient);
+  private readonly demoSavedFormulasStorageKey = 'giavico_demo_saved_formulas';
 
   // Default microservice API endpoints.
   private readonly defaultCompleteApiUrl = `${GIAVICO_API_DOMAINS.formula}/generate`;
@@ -42,10 +76,15 @@ export class OllamaFormulationService {
   public generateFormula(
     input: FormulationInput,
     historicalData?: string,
-    _model?: string,
+    model?: string,
     apiUrl: string = this.defaultCompleteApiUrl
   ): Observable<BeverageFormula> {
-    return this.http.post<FormulaGenerationResponse>(apiUrl, this.buildApiRequest(input, historicalData)).pipe(
+    const demoKey = this.getDemoGeminiApiKey();
+    if (demoKey) {
+      return this.generateFormulaWithDirectGemini(input, historicalData, model, demoKey);
+    }
+
+    return this.http.post<FormulaGenerationResponse>(apiUrl, this.buildApiRequest(input, historicalData, model)).pipe(
       map((response) => {
         try {
           return this.validateAndNormalizeFormula(response);
@@ -61,6 +100,10 @@ export class OllamaFormulationService {
     formula: BeverageFormula,
     apiUrl: string = this.defaultFormulasApiUrl
   ): Observable<SavedBeverageFormula> {
+    if (this.getDemoGeminiApiKey()) {
+      return defer(() => of(this.storeDemoSavedFormula(input, formula)));
+    }
+
     return defer(() =>
       this.http.post<FormulaGenerationResponse>(apiUrl, this.buildStoreRequest(input, formula)).pipe(
         map((response) => this.mapGenerationResponseToSavedFormula(input, response))
@@ -73,6 +116,10 @@ export class OllamaFormulationService {
     size = 20,
     apiUrl: string = this.defaultFormulasApiUrl
   ): Observable<SavedBeverageFormula[]> {
+    if (this.getDemoGeminiApiKey()) {
+      return of(this.getDemoSavedFormulas().slice(page * size, page * size + size));
+    }
+
     return this.http.get<ApiPage<FormulaListItem>>(`${apiUrl}?page=${page}&size=${size}`).pipe(
       switchMap((response) => {
         const items = response.content ?? [];
@@ -90,6 +137,18 @@ export class OllamaFormulationService {
     id: string,
     apiUrl: string = this.defaultFormulasApiUrl
   ): Observable<SavedBeverageFormula> {
+    if (this.getDemoGeminiApiKey()) {
+      return defer(() => {
+        const savedFormula = this.getDemoSavedFormulas().find((item) => item.id === id);
+
+        if (!savedFormula) {
+          throw new Error('Saved demo formula was not found in this browser.');
+        }
+
+        return of(savedFormula);
+      });
+    }
+
     return this.http.get<FormulaDetailResponse>(`${apiUrl}/${id}`).pipe(
       map((response) => this.mapDetailResponseToSavedFormula(response))
     );
@@ -101,6 +160,10 @@ export class OllamaFormulationService {
     formula: BeverageFormula,
     apiUrl: string = this.defaultFormulasApiUrl
   ): Observable<SavedBeverageFormula> {
+    if (this.getDemoGeminiApiKey()) {
+      return defer(() => of(this.updateDemoSavedFormula(id, input, formula)));
+    }
+
     return defer(() =>
       this.http.put<FormulaDetailResponse>(`${apiUrl}/${id}`, this.buildStoreRequest(input, formula)).pipe(
         map((response) => this.mapDetailResponseToSavedFormula(response))
@@ -112,14 +175,28 @@ export class OllamaFormulationService {
     id: string,
     apiUrl: string = this.defaultFormulasApiUrl
   ): Observable<void> {
+    if (this.getDemoGeminiApiKey()) {
+      return defer(() => {
+        this.setDemoSavedFormulas(this.getDemoSavedFormulas().filter((formula) => formula.id !== id));
+
+        return of(undefined);
+      });
+    }
+
     return this.http.delete<void>(`${apiUrl}/${id}`);
   }
 
   public chat(
     message: string,
+    model?: string,
     apiUrl: string = this.defaultChatApiUrl
   ): Observable<string> {
-    return this.http.post<{ message: string }>(apiUrl, { message }).pipe(
+    const demoKey = this.getDemoGeminiApiKey();
+    if (demoKey) {
+      return this.chatWithDirectGemini(message, model, demoKey);
+    }
+
+    return this.http.post<{ message: string }>(apiUrl, this.buildChatRequest(message, model)).pipe(
       map((response) => response.message)
     );
   }
@@ -129,6 +206,10 @@ export class OllamaFormulationService {
     size = 100,
     apiUrl: string = this.defaultChatMessagesApiUrl
   ): Observable<ChatHistoryMessage[]> {
+    if (this.getDemoGeminiApiKey()) {
+      return of([]);
+    }
+
     return this.http.get<ApiPage<ChatHistoryMessage>>(`${apiUrl}?page=${page}&size=${size}`).pipe(
       map((response) => response.content ?? [])
     );
@@ -139,25 +220,50 @@ export class OllamaFormulationService {
     content: string,
     apiUrl: string = this.defaultChatMessagesApiUrl
   ): Observable<ChatHistoryMessage> {
+    if (this.getDemoGeminiApiKey()) {
+      return of({
+        id: `${Date.now()}`,
+        role,
+        content,
+        createdAt: new Date().toISOString(),
+      });
+    }
+
     return this.http.post<ChatHistoryMessage>(apiUrl, { role, content });
   }
 
   public clearChatMessages(
     apiUrl: string = this.defaultChatMessagesApiUrl
   ): Observable<void> {
+    if (this.getDemoGeminiApiKey()) {
+      return of(undefined);
+    }
+
     return this.http.delete<void>(apiUrl);
   }
 
   public getOpenAiKeyStatus(
     apiUrl: string = this.defaultAccountOpenAiKeyStatusUrl
   ): Observable<{ configured: boolean; provider: string; model: string }> {
+    if (this.getDemoGeminiApiKey()) {
+      return of({ configured: true, provider: 'gemini-direct-demo', model: DEFAULT_CHAT_AI_MODEL });
+    }
+
     return this.http.get<{ configured: boolean; provider: string; model: string }>(apiUrl);
   }
 
   public chatStream(
     message: string,
+    model?: string,
     apiUrl: string = this.defaultChatStreamApiUrl
   ): Observable<ChatStreamEvent> {
+    const demoKey = this.getDemoGeminiApiKey();
+    if (demoKey) {
+      return this.chatWithDirectGemini(message, model, demoKey).pipe(
+        map((response) => ({ type: 'complete', response } satisfies ChatStreamEvent))
+      );
+    }
+
     return new Observable<ChatStreamEvent>((observer) => {
       const controller = new AbortController();
 
@@ -167,7 +273,7 @@ export class OllamaFormulationService {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ message }),
+          body: JSON.stringify(this.buildChatRequest(message, model)),
           signal: controller.signal,
         });
 
@@ -234,12 +340,19 @@ export class OllamaFormulationService {
   public generateFormulaStream(
     input: FormulationInput,
     historicalData?: string,
-    _model?: string,
+    model?: string,
     apiUrl: string = this.defaultStreamApiUrl
   ): Observable<FormulationStreamEvent> {
+    const demoKey = this.getDemoGeminiApiKey();
+    if (demoKey) {
+      return this.generateFormulaWithDirectGemini(input, historicalData, model, demoKey).pipe(
+        map((formula) => ({ type: 'complete', formula } satisfies FormulationStreamEvent))
+      );
+    }
+
     return new Observable<FormulationStreamEvent>((observer) => {
       const controller = new AbortController();
-      const requestPayload = this.buildApiRequest(input, historicalData);
+      const requestPayload = this.buildApiRequest(input, historicalData, model);
 
       const streamFormula = async (): Promise<void> => {
         const response = await fetch(apiUrl, {
@@ -308,7 +421,135 @@ export class OllamaFormulationService {
     });
   }
 
-  private buildApiRequest(input: FormulationInput, historicalData?: string): FormulationInput {
+  private buildApiRequest(input: FormulationInput, historicalData?: string, model?: string): AiFormulationRequest {
+    return {
+      ...this.buildNormalizedFormulationInput(input, historicalData),
+      ...this.buildAiRequestMetadata('formula', model),
+    };
+  }
+
+  private buildChatRequest(message: string, model?: string): AiChatRequest {
+    return {
+      message,
+      ...this.buildAiRequestMetadata('chat', model),
+    };
+  }
+
+  private buildAiRequestMetadata(useCase: 'chat' | 'formula', model?: string): AiRequestMetadata {
+    const selection = chooseGeminiModel(useCase, model);
+
+    return {
+      ...selection,
+      aiProvider: selection.provider,
+    };
+  }
+
+  private chatWithDirectGemini(message: string, model: string | undefined, apiKey: string): Observable<string> {
+    return defer(() =>
+      this.callGeminiGenerateContent(
+        model,
+        `You are Giavico AI, an R&D beverage formulation assistant. Answer clearly and practically about formulation, stability, Brix, cost, regulations, and process constraints.\n\nUser question:\n${message}`,
+        apiKey
+      )
+    );
+  }
+
+  private generateFormulaWithDirectGemini(
+    input: FormulationInput,
+    historicalData: string | undefined,
+    model: string | undefined,
+    apiKey: string
+  ): Observable<BeverageFormula> {
+    const normalizedInput = this.buildNormalizedFormulationInput(input);
+    const prompt = this.constructUserPrompt(normalizedInput, historicalData);
+
+    return defer(() =>
+      this.callGeminiGenerateContent(model, prompt, apiKey, this.constructSystemPrompt(), 'application/json')
+        .then((responseText) => {
+          const formula = JSON.parse(this.extractJsonObject(responseText)) as BeverageFormula;
+
+          return this.validateAndNormalizeFormula(formula);
+        })
+        .catch((error) => {
+          throw new Error(`Gemini formula generation failed: ${error instanceof Error ? error.message : String(error)}`);
+        })
+    );
+  }
+
+  private async callGeminiGenerateContent(
+    model: string | undefined,
+    prompt: string,
+    apiKey: string,
+    systemPrompt?: string,
+    responseMimeType?: 'application/json'
+  ): Promise<string> {
+    const selection = chooseGeminiModel(responseMimeType === 'application/json' ? 'formula' : 'chat', model);
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(selection.model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: prompt }],
+            },
+          ],
+          ...(systemPrompt ? { systemInstruction: { parts: [{ text: systemPrompt }] } } : {}),
+          generationConfig: {
+            temperature: responseMimeType === 'application/json' ? 0.2 : 0.45,
+            ...(responseMimeType ? { responseMimeType } : {}),
+          },
+        }),
+      }
+    );
+
+    const payload = await response.json().catch(() => null) as GeminiGenerateContentResponse | null;
+    if (!response.ok) {
+      throw new Error(payload?.error?.message ?? `Gemini request failed with status ${response.status}.`);
+    }
+
+    const text = payload?.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? '')
+      .join('')
+      .trim();
+
+    if (!text) {
+      throw new Error(payload?.promptFeedback?.blockReason
+        ? `Gemini blocked the response: ${payload.promptFeedback.blockReason}.`
+        : 'Gemini returned an empty response.');
+    }
+
+    return text;
+  }
+
+  private getDemoGeminiApiKey(): string {
+    if (typeof localStorage === 'undefined') {
+      return DEFAULT_DEMO_GEMINI_API_KEY.trim();
+    }
+
+    return (localStorage.getItem(DEMO_GEMINI_API_KEY_STORAGE_KEY) ?? DEFAULT_DEMO_GEMINI_API_KEY).trim();
+  }
+
+  private extractJsonObject(value: string): string {
+    const trimmedValue = value
+      .replace(/^```(?:json)?/i, '')
+      .replace(/```$/i, '')
+      .trim();
+    const startIndex = trimmedValue.indexOf('{');
+    const endIndex = trimmedValue.lastIndexOf('}');
+
+    if (startIndex === -1 || endIndex === -1 || endIndex <= startIndex) {
+      throw new Error('Gemini did not return a JSON object.');
+    }
+
+    return trimmedValue.slice(startIndex, endIndex + 1);
+  }
+
+  private buildNormalizedFormulationInput(input: FormulationInput, historicalData?: string): FormulationInput {
     return {
       ...input,
       drinkName: input.drinkName.trim(),
@@ -324,7 +565,7 @@ export class OllamaFormulationService {
   }
 
   private buildStoreRequest(input: FormulationInput, formula: BeverageFormula): FormulationInput & BeverageFormula {
-    const normalizedInput = this.buildApiRequest(input);
+    const normalizedInput = this.buildNormalizedFormulationInput(input);
     const normalizedFormula = this.validateAndNormalizeFormula(formula);
     const ingredients = normalizedFormula.ingredients
       .map((ingredient) => ({
@@ -348,6 +589,70 @@ export class OllamaFormulationService {
         .map((alert) => `${alert ?? ''}`.trim())
         .filter(Boolean),
     };
+  }
+
+  private storeDemoSavedFormula(input: FormulationInput, formula: BeverageFormula): SavedBeverageFormula {
+    const normalizedFormula = this.validateAndNormalizeFormula(formula);
+    const normalizedInput = this.buildNormalizedFormulationInput(input);
+    const savedFormula: SavedBeverageFormula = {
+      id: `demo-${Date.now()}`,
+      name: normalizedInput.drinkName,
+      summary: this.buildFallbackSummary(normalizedInput, normalizedFormula),
+      savedAt: new Date().toISOString(),
+      formula: normalizedFormula,
+      input: normalizedInput,
+    };
+
+    this.setDemoSavedFormulas([savedFormula, ...this.getDemoSavedFormulas()]);
+
+    return savedFormula;
+  }
+
+  private updateDemoSavedFormula(
+    id: string,
+    input: FormulationInput,
+    formula: BeverageFormula
+  ): SavedBeverageFormula {
+    const normalizedFormula = this.validateAndNormalizeFormula(formula);
+    const normalizedInput = this.buildNormalizedFormulationInput(input);
+    const savedFormula: SavedBeverageFormula = {
+      id,
+      name: normalizedInput.drinkName,
+      summary: this.buildFallbackSummary(normalizedInput, normalizedFormula),
+      savedAt: new Date().toISOString(),
+      formula: normalizedFormula,
+      input: normalizedInput,
+    };
+    const savedFormulas = this.getDemoSavedFormulas();
+
+    this.setDemoSavedFormulas([
+      savedFormula,
+      ...savedFormulas.filter((item) => item.id !== id),
+    ]);
+
+    return savedFormula;
+  }
+
+  private getDemoSavedFormulas(): SavedBeverageFormula[] {
+    if (typeof localStorage === 'undefined') {
+      return [];
+    }
+
+    try {
+      const rawValue = localStorage.getItem(this.demoSavedFormulasStorageKey);
+
+      return rawValue ? JSON.parse(rawValue) as SavedBeverageFormula[] : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private setDemoSavedFormulas(savedFormulas: SavedBeverageFormula[]): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+
+    localStorage.setItem(this.demoSavedFormulasStorageKey, JSON.stringify(savedFormulas));
   }
 
   private toNonNegativeNumber(value: number | string | null | undefined): number {
