@@ -20,6 +20,13 @@ import { ThemeService } from '../../../core/theme/theme.service';
 import { ProcessGeneralComponent } from '../../process-general/pages/process-general.component';
 import { RndDocumentListComponent } from '../../rnd-documents/pages/rnd-document-list.component';
 import { OllamaFormulationService } from '../data-access/ollama-formulation.service';
+import {
+  DEFAULT_CHAT_AI_MODEL,
+  DEFAULT_DEMO_GEMINI_API_KEY,
+  DEFAULT_FORMULA_AI_MODEL,
+  DEMO_GEMINI_API_KEY_STORAGE_KEY,
+  GEMINI_AI_MODEL_OPTIONS,
+} from '../data-access/ai-model-options';
 import { AppLanguage, LanguageService } from '../../../core/i18n/language.service';
 import { AuthService } from '../../../core/auth/auth.service';
 
@@ -112,7 +119,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
             >
               <span>DC</span>
               {{ t('rndDocuments') }}
-            </a>
+            </button>
             <a routerLink="/planning" class="menu-item">
               <span>PL</span>
               {{ t('planNav') }}
@@ -208,6 +215,16 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
         <section class="form-panel card">
           <h2>{{ t('targetMatrix') }}</h2>
           <form [formGroup]="form" (ngSubmit)="onGenerate()">
+            <div class="model-picker">
+              <label for="formulaModel">Formula model</label>
+              <select id="formulaModel" [value]="formulaModel()" (change)="chooseFormulaModel($any($event.target).value)">
+                <option *ngFor="let modelOption of formulaModelOptions" [value]="modelOption.model">
+                  {{ modelOption.label }}
+                </option>
+              </select>
+              <p>{{ getSelectedModelDescription(formulaModel()) }}</p>
+            </div>
+
             <!-- Target Parameters -->
             <fieldset>
               <legend>{{ t('targetParameters') }}</legend>
@@ -438,13 +455,13 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
               <div class="section-heading">
                 <div>
                   <h2>{{ t('account') }}</h2>
-                  <p>Sign in with Google and confirm the backend OpenAI key used for AI requests.</p>
+                  <p>Google sign-in is optional for user identity. Gemini API keys are created in Google AI Studio and stored on the backend.</p>
                 </div>
               </div>
 
               <div class="account-grid">
                 <section class="account-box">
-                  <h3>Google account</h3>
+                  <h3>Google account (optional)</h3>
                   <ng-container *ngIf="googleProfile(); else signedOutAccount">
                     <div class="account-profile">
                       <img *ngIf="googleProfile()?.picture" [src]="googleProfile()?.picture" alt="" />
@@ -456,6 +473,9 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
                     <button type="button" class="btn-small" (click)="logoutGoogle()">Sign out</button>
                   </ng-container>
                   <ng-template #signedOutAccount>
+                    <p class="account-note">
+                      Skip this step when you only need a Gemini API key. Google login does not create or reveal API keys.
+                    </p>
                     <label for="googleClientId">Google OAuth Client ID</label>
                     <input
                       id="googleClientId"
@@ -472,7 +492,20 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
                 </section>
 
                 <section class="account-box">
-                  <h3>OpenAI access</h3>
+                  <h3>Gemini API key setup</h3>
+                  <label for="demoGeminiApiKey">Direct Angular demo key</label>
+                  <input
+                    id="demoGeminiApiKey"
+                    type="password"
+                    [value]="demoGeminiApiKey()"
+                    (input)="demoGeminiApiKey.set($any($event.target).value)"
+                    placeholder="Paste a Gemini API key for local demo mode"
+                  />
+                  <div class="account-actions-inline">
+                    <button type="button" class="btn-small primary" (click)="saveDemoGeminiApiKey()">Use this key</button>
+                    <button type="button" class="btn-small" (click)="resetDemoGeminiApiKey()">Reset demo key</button>
+                  </div>
+                  <p class="account-note">{{ demoGeminiKeyMessage() }}</p>
                   <div class="status-row">
                     <span>Status</span>
                     <strong [class.ready]="openAiKeyStatus()?.configured" [class.missing]="openAiKeyStatus() && !openAiKeyStatus()?.configured">
@@ -481,15 +514,18 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
                   </div>
                   <div class="status-row">
                     <span>Provider</span>
-                    <strong>{{ openAiKeyStatus()?.provider || 'openai' }}</strong>
+                    <strong>{{ openAiKeyStatus()?.provider || 'gemini' }}</strong>
                   </div>
                   <div class="status-row">
                     <span>Model</span>
                     <strong>{{ openAiKeyStatus()?.model || 'Not loaded' }}</strong>
                   </div>
                   <p class="account-note">
-                    The OpenAI API key stays on the backend. Set <code>OPENAI_API_KEY</code> before starting the microservices.
+                    Create or view your key in Google AI Studio, then restart the chat/formula microservices with <code>GEMINI_API_KEY</code> set.
                   </p>
+                  <a class="account-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">
+                    Open Google AI Studio API keys
+                  </a>
                   <button type="button" class="btn-small primary" (click)="loadOpenAiKeyStatus()">Refresh status</button>
                 </section>
               </div>
@@ -501,8 +537,18 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
               <div class="section-heading">
                 <div>
                   <h2>{{ t('chatbot') }}</h2>
-                  <p>Ask OpenAI about beverage formulation, stability, Brix, cost, or process constraints.</p>
+                  <p>Ask Gemini about beverage formulation, stability, Brix, cost, or process constraints.</p>
                 </div>
+              </div>
+
+              <div class="model-picker chat-model-picker">
+                <label for="chatModel">Chat model</label>
+                <select id="chatModel" [value]="chatModel()" (change)="chooseChatModel($any($event.target).value)">
+                  <option *ngFor="let modelOption of chatModelOptions" [value]="modelOption.model">
+                    {{ modelOption.label }}
+                  </option>
+                </select>
+                <p>{{ getSelectedModelDescription(chatModel()) }}</p>
               </div>
 
               <div class="chat-window">
@@ -531,7 +577,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
                   placeholder="Ask about acidification, ingredient compatibility, cost projection..."
                 ></textarea>
                 <button type="button" class="btn-generate" [disabled]="chatLoading() || !chatDraft().trim()" (click)="onSendChatMessage()">
-                  {{ chatLoading() ? t('sending') : 'Send to OpenAI' }}
+                  {{ chatLoading() ? t('sending') : 'Send to Gemini' }}
                 </button>
               </div>
             </section>
@@ -763,6 +809,11 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     .account-action {
       margin-top: 2px;
     }
+    .account-actions-inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
     .account-profile {
       align-items: center;
       display: flex;
@@ -791,6 +842,16 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     }
     .account-note code {
       color: #38bdf8;
+    }
+    .account-link {
+      color: #7dd3fc;
+      font-size: 0.84rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .account-link:hover {
+      color: #bae6fd;
+      text-decoration: underline;
     }
     .status-row {
       align-items: center;
@@ -883,6 +944,39 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     .chat-form label {
       color: #94a3b8;
       font-size: 0.85rem;
+    }
+    .model-picker {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 14px;
+    }
+    .chat-model-picker {
+      margin-bottom: 16px;
+    }
+    .model-picker label {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .model-picker select {
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      color: #f8fafc;
+      cursor: pointer;
+      font: inherit;
+      padding: 10px 12px;
+      width: 100%;
+    }
+    .model-picker p {
+      color: #94a3b8;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      margin: 0;
     }
     .workbench-layout {
       display: grid;
@@ -1509,6 +1603,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
       color: #0f172a;
     }
     :host-context(.light-theme) fieldset,
+    :host-context(.light-theme) .model-picker,
     :host-context(.light-theme) .output-toolbar,
     :host-context(.light-theme) .stream-block,
     :host-context(.light-theme) .chat-window,
@@ -1517,7 +1612,8 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     :host-context(.light-theme) .saved-count,
     :host-context(.light-theme) .variance-text,
     :host-context(.light-theme) .theme-toggle,
-    :host-context(.light-theme) .language-select select {
+    :host-context(.light-theme) .language-select select,
+    :host-context(.light-theme) .model-picker select {
       background: #f8fafc;
       border-color: #d8e0ea;
     }
@@ -1537,8 +1633,13 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     }
     :host-context(.light-theme) .account-note,
     :host-context(.light-theme) .account-profile span,
+    :host-context(.light-theme) .model-picker label,
+    :host-context(.light-theme) .model-picker p,
     :host-context(.light-theme) .status-row span {
       color: #64748b;
+    }
+    :host-context(.light-theme) .account-link {
+      color: #0369a1;
     }
     :host-context(.light-theme) .status-row {
       border-color: #e2e8f0;
@@ -1556,7 +1657,8 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     :host-context(.light-theme) .saved-formula-item strong,
     :host-context(.light-theme) .metrics strong,
     :host-context(.light-theme) .theme-toggle,
-    :host-context(.light-theme) .language-select select {
+    :host-context(.light-theme) .language-select select,
+    :host-context(.light-theme) .model-picker select {
       color: #0f172a;
     }
     :host-context(.light-theme) h2,
@@ -1813,10 +1915,20 @@ export class FormulatorWorkbenchComponent implements OnInit {
   public readonly chatDraft = signal('');
   public readonly chatLoading = signal(false);
   public readonly chatMessages = signal<ChatMessage[]>(DEFAULT_CHAT_MESSAGES);
+  public readonly formulaModel = signal(DEFAULT_FORMULA_AI_MODEL);
+  public readonly chatModel = signal(DEFAULT_CHAT_AI_MODEL);
+  public readonly formulaModelOptions = GEMINI_AI_MODEL_OPTIONS.filter((option) =>
+    option.recommendedFor.includes('formula')
+  );
+  public readonly chatModelOptions = GEMINI_AI_MODEL_OPTIONS.filter((option) =>
+    option.recommendedFor.includes('chat')
+  );
   public readonly editingFormulaId = signal<string | null>(null);
   public readonly googleClientId = signal('');
   public readonly googleProfile = signal<GoogleAccountProfile | null>(null);
-  public readonly googleLoginMessage = signal('Google login identifies the user. OpenAI requests still use the backend key.');
+  public readonly googleLoginMessage = signal('Google login identifies the user. Gemini requests still use the backend key.');
+  public readonly demoGeminiApiKey = signal(DEFAULT_DEMO_GEMINI_API_KEY);
+  public readonly demoGeminiKeyMessage = signal('Direct Angular demo mode is enabled. Replace this key here if needed.');
   public readonly openAiKeyStatus = signal<OpenAiKeyStatus | null>(null);
   private readonly generatedInput = this.store.selectSignal(selectFormulationInput);
 
@@ -1836,6 +1948,7 @@ export class FormulatorWorkbenchComponent implements OnInit {
     this.store.dispatch(FormulationActions.loadSavedFormulas());
     this.loadChatHistory();
     this.restoreGoogleAccount();
+    this.restoreDemoGeminiApiKey();
     this.loadOpenAiKeyStatus();
   }
 
@@ -1846,6 +1959,7 @@ export class FormulatorWorkbenchComponent implements OnInit {
     this.store.dispatch(
       FormulationActions.requestAIGeneration({
         input,
+        model: this.formulaModel(),
         // Optional: include standard mock baseline context to pass to the model
         historicalData: `Baseline Formula Key: BOM-REF-TEA-0982
 - Ingredients: Water (85.5%), High Fructose Corn Syrup (11.0%), Tea Extract (2.5%), Citric Acid (0.8%), Natural Flavor (0.2%)
@@ -1918,6 +2032,19 @@ export class FormulatorWorkbenchComponent implements OnInit {
     this.languageService.setLanguage(language);
   }
 
+  public chooseFormulaModel(model: string): void {
+    this.formulaModel.set(this.normalizeSelectedModel(model, DEFAULT_FORMULA_AI_MODEL));
+  }
+
+  public chooseChatModel(model: string): void {
+    this.chatModel.set(this.normalizeSelectedModel(model, DEFAULT_CHAT_AI_MODEL));
+  }
+
+  public getSelectedModelDescription(model: string): string {
+    return GEMINI_AI_MODEL_OPTIONS.find((option) => option.model === model)?.description
+      ?? 'Gemini model selected for this request.';
+  }
+
   public t(key: string): string {
     return this.languageService.translate(key);
   }
@@ -1985,7 +2112,7 @@ export class FormulatorWorkbenchComponent implements OnInit {
       content: '',
     }]);
 
-    this.ollamaService.chatStream(message).subscribe({
+    this.ollamaService.chatStream(message, this.chatModel()).subscribe({
       next: (event) => {
         this.activeMenu.set('Chatbot');
         this.updateChatMessages((messages) =>
@@ -2056,8 +2183,29 @@ export class FormulatorWorkbenchComponent implements OnInit {
   public loadOpenAiKeyStatus(): void {
     this.ollamaService.getOpenAiKeyStatus().subscribe({
       next: (status) => this.openAiKeyStatus.set(status),
-      error: () => this.openAiKeyStatus.set({ configured: false, provider: 'openai', model: 'Unavailable' }),
+      error: () => this.openAiKeyStatus.set({ configured: false, provider: 'gemini', model: 'Unavailable' }),
     });
+  }
+
+  public saveDemoGeminiApiKey(): void {
+    const apiKey = this.demoGeminiApiKey().trim();
+
+    if (!apiKey) {
+      this.demoGeminiKeyMessage.set('Enter a Gemini API key before enabling direct demo mode.');
+      return;
+    }
+
+    localStorage.setItem(DEMO_GEMINI_API_KEY_STORAGE_KEY, apiKey);
+    this.demoGeminiApiKey.set(apiKey);
+    this.demoGeminiKeyMessage.set('Direct Angular demo mode is enabled with the saved browser key.');
+    this.loadOpenAiKeyStatus();
+  }
+
+  public resetDemoGeminiApiKey(): void {
+    localStorage.removeItem(DEMO_GEMINI_API_KEY_STORAGE_KEY);
+    this.demoGeminiApiKey.set(DEFAULT_DEMO_GEMINI_API_KEY);
+    this.demoGeminiKeyMessage.set('Direct Angular demo mode is using the built-in temporary demo key.');
+    this.loadOpenAiKeyStatus();
   }
 
   public getFormulaSummary(formula: BeverageFormula): string {
@@ -2211,6 +2359,14 @@ export class FormulatorWorkbenchComponent implements OnInit {
     };
   }
 
+  private normalizeSelectedModel(model: string, fallbackModel: string): string {
+    const normalizedModel = model.trim();
+
+    return GEMINI_AI_MODEL_OPTIONS.some((option) => option.model === normalizedModel)
+      ? normalizedModel
+      : fallbackModel;
+  }
+
   private updateChatMessages(updater: (messages: ChatMessage[]) => ChatMessage[]): void {
     this.chatMessages.update((messages) => updater(messages));
   }
@@ -2226,6 +2382,15 @@ export class FormulatorWorkbenchComponent implements OnInit {
         this.chatMessages.set(DEFAULT_CHAT_MESSAGES);
       },
     });
+  }
+
+  private restoreDemoGeminiApiKey(): void {
+    const apiKey = localStorage.getItem(DEMO_GEMINI_API_KEY_STORAGE_KEY)?.trim();
+
+    if (apiKey) {
+      this.demoGeminiApiKey.set(apiKey);
+      this.demoGeminiKeyMessage.set('Direct Angular demo mode is using the saved browser key.');
+    }
   }
 
   private restoreGoogleAccount(): void {
@@ -2288,7 +2453,7 @@ export class FormulatorWorkbenchComponent implements OnInit {
 
       this.googleProfile.set(profile);
       localStorage.setItem('giavico_google_profile', JSON.stringify(profile));
-      this.googleLoginMessage.set('Google login completed. AI requests will use the backend OpenAI key.');
+      this.googleLoginMessage.set('Google login completed. AI requests will use the backend Gemini key.');
     } catch {
       this.googleLoginMessage.set('Google credential could not be decoded.');
     }

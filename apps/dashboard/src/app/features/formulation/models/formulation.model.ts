@@ -25,6 +25,21 @@ export interface ChatHistoryMessage {
   createdAt: string;
 }
 
+export type AiProvider = 'gemini';
+
+export type AiModelUseCase = 'chat' | 'formula';
+
+export interface AiModelSelection {
+  provider: AiProvider;
+  model: string;
+}
+
+export interface AiModelOption extends AiModelSelection {
+  label: string;
+  description: string;
+  recommendedFor: AiModelUseCase[];
+}
+
 export interface SavedBeverageFormula {
   id: string;
   name: string;
