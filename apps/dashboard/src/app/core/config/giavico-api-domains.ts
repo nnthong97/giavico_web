@@ -8,6 +8,7 @@ export const GIAVICO_API_DOMAINS = {
   inventory:    isLocalDev ? 'http://localhost:8082/api/inventory'    : '/api/inventory',
   chat:         isLocalDev ? 'http://localhost:8083/api/chat'         : '/api/chat',
   rndDocuments: isLocalDev ? 'http://localhost:8084/api/rnd-documents': '/api/rnd-documents',
+  processRuns:  isLocalDev ? 'http://localhost:8080/api/process-runs'  : '/api/process-runs',
   auth:         isLocalDev ? 'http://localhost:8085/api/auth'         : '/api/auth',
 };
 
@@ -16,4 +17,5 @@ export const GIAVICO_GATEWAY_API_DOMAINS = {
   inventory:    `${giavicoApiGatewayBaseUrl}/api/inventory`,
   chat:         `${giavicoApiGatewayBaseUrl}/api/chat`,
   rndDocuments: `${giavicoApiGatewayBaseUrl}/api/rnd-documents`,
+  processRuns:  `${giavicoApiGatewayBaseUrl}/api/process-runs`,
 };
