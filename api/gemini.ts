@@ -84,13 +84,17 @@ export default async function handler(
     return;
   }
 
-  const apiKey = process.env['GEMINI_API_KEY']?.trim();
+  const requestApiKey = getRequestApiKey(request);
+  const apiKey =
+    requestApiKey || normalizeApiKey(process.env['GEMINI_API_KEY']);
 
   if (request.method === 'GET') {
+    const keyStatus = await validateGeminiApiKey(apiKey);
     response.status(200).json({
-      configured: Boolean(apiKey),
+      configured: keyStatus.valid,
       provider: 'gemini-vercel',
       model: 'Selectable per request',
+      ...(keyStatus.message ? { message: keyStatus.message } : {}),
     });
     return;
   }
@@ -105,6 +109,14 @@ export default async function handler(
     response.status(503).json({
       message:
         'Gemini is not configured. Add GEMINI_API_KEY to the Vercel project environment variables and redeploy.',
+    });
+    return;
+  }
+
+  if (!isGeminiApiKey(apiKey)) {
+    response.status(503).json({
+      message:
+        'GEMINI_API_KEY is not a recognized Gemini key format. Paste only the AQ. or AIza key value, without quotes or GEMINI_API_KEY=.',
     });
     return;
   }
@@ -138,8 +150,10 @@ export default async function handler(
     if (!geminiResponse.ok) {
       response.status(geminiResponse.status).json({
         message:
-          payload?.error?.message ??
-          `Gemini request failed with status ${geminiResponse.status}.`,
+          geminiResponse.status === 401
+            ? 'Google rejected the Gemini API key. Create a new key in Google AI Studio, paste only its AQ. or AIza value, and try again.'
+            : (payload?.error?.message ??
+              `Gemini request failed with status ${geminiResponse.status}.`),
       });
       return;
     }
@@ -304,6 +318,66 @@ function requiredString(
 
 function optionalString(value: unknown, maxLength: number): string {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+}
+
+function normalizeApiKey(value: string | undefined): string {
+  return value?.trim() ?? '';
+}
+
+function getRequestApiKey(request: ApiRequest): string {
+  const value = request.headers['x-giavico-gemini-key'];
+  return normalizeApiKey(Array.isArray(value) ? value[0] : value);
+}
+
+function isGeminiApiKey(value: string): boolean {
+  return /^(?:AIza[A-Za-z0-9_-]{30,}|AQ\.[A-Za-z0-9_-]{30,})$/.test(value);
+}
+
+async function validateGeminiApiKey(
+  apiKey: string,
+): Promise<{ valid: boolean; message?: string }> {
+  if (!apiKey) {
+    return { valid: false, message: 'GEMINI_API_KEY is missing.' };
+  }
+
+  if (!isGeminiApiKey(apiKey)) {
+    return {
+      valid: false,
+      message:
+        'GEMINI_API_KEY must contain only an AQ. authorization key or an AIza standard key.',
+    };
+  }
+
+  try {
+    const validationResponse = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1',
+      {
+        headers: {
+          Accept: 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+      },
+    );
+
+    if (validationResponse.ok) {
+      return { valid: true };
+    }
+
+    const payload = (await validationResponse
+      .json()
+      .catch(() => null)) as GeminiResponse | null;
+    return {
+      valid: false,
+      message:
+        payload?.error?.message ??
+        `Google rejected GEMINI_API_KEY with status ${validationResponse.status}.`,
+    };
+  } catch {
+    return {
+      valid: false,
+      message: 'Unable to validate GEMINI_API_KEY with Google.',
+    };
+  }
 }
 
 function isSameOriginRequest(request: ApiRequest): boolean {
