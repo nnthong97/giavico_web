@@ -19,6 +19,11 @@ export class OllamaFormulationService {
   private readonly http = inject(HttpClient);
   private readonly geminiProxyApiUrl = '/api/gemini';
   private readonly savedFormulasStorageKey = 'giavico_demo_saved_formulas';
+  private sessionGeminiApiKey = '';
+
+  public setSessionGeminiApiKey(apiKey: string): void {
+    this.sessionGeminiApiKey = apiKey.trim();
+  }
 
   public generateFormula(
     input: FormulationInput,
@@ -26,12 +31,16 @@ export class OllamaFormulationService {
     model?: string,
   ): Observable<BeverageFormula> {
     return this.http
-      .post<BeverageFormula>(this.geminiProxyApiUrl, {
-        useCase: 'formula',
-        model: chooseGeminiModel('formula', model).model,
-        input: this.normalizeFormulationInput(input),
-        historicalData,
-      })
+      .post<BeverageFormula>(
+        this.geminiProxyApiUrl,
+        {
+          useCase: 'formula',
+          model: chooseGeminiModel('formula', model).model,
+          input: this.normalizeFormulationInput(input),
+          historicalData,
+        },
+        this.buildGeminiRequestOptions(),
+      )
       .pipe(map((formula) => this.validateAndNormalizeFormula(formula)));
   }
 
@@ -50,11 +59,15 @@ export class OllamaFormulationService {
 
   public chat(message: string, model?: string): Observable<string> {
     return this.http
-      .post<{ message: string }>(this.geminiProxyApiUrl, {
-        useCase: 'chat',
-        model: chooseGeminiModel('chat', model).model,
-        message,
-      })
+      .post<{ message: string }>(
+        this.geminiProxyApiUrl,
+        {
+          useCase: 'chat',
+          model: chooseGeminiModel('chat', model).model,
+          message,
+        },
+        this.buildGeminiRequestOptions(),
+      )
       .pipe(map((response) => response.message));
   }
 
@@ -79,7 +92,7 @@ export class OllamaFormulationService {
       configured: boolean;
       provider: string;
       model: string;
-    }>(this.geminiProxyApiUrl);
+    }>(this.geminiProxyApiUrl, this.buildGeminiRequestOptions());
   }
 
   public storeFormula(
@@ -145,6 +158,18 @@ export class OllamaFormulationService {
 
   public clearChatMessages(): Observable<void> {
     return of(undefined);
+  }
+
+  private buildGeminiRequestOptions(): {
+    headers?: Record<string, string>;
+  } {
+    return this.sessionGeminiApiKey
+      ? {
+          headers: {
+            'X-Giavico-Gemini-Key': this.sessionGeminiApiKey,
+          },
+        }
+      : {};
   }
 
   private storeSavedFormula(
