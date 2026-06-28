@@ -11,7 +11,7 @@ import {
   RndDocumentType,
   RndWorkflowRequest,
 } from '../models/rnd-document.model';
-import { GIAVICO_API_DOMAINS } from '../../../core/config/giavico-api-domains';
+import { GIAVICO_GATEWAY_API_DOMAINS } from '../../../core/config/giavico-api-domains';
 
 interface ApiPage<T> {
   content: T[];
@@ -24,7 +24,7 @@ interface ApiPage<T> {
 @Injectable({ providedIn: 'root' })
 export class RndDocumentService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = GIAVICO_API_DOMAINS.rndDocuments;
+  private readonly apiUrl = GIAVICO_GATEWAY_API_DOMAINS.rndDocuments;
   private readonly mockStorageKey = 'giavico.rnd-documents.mock.v1';
 
   public list(page = 0, size = 20, status?: RndDocumentStatus, search?: string): Observable<ApiPage<RndDocumentSummary>> {

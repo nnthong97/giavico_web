@@ -322,8 +322,8 @@ interface GeneratedTextSection {
       font-size: 0.98rem;
       max-width: 100%;
       margin: 0 0 10px 0;
-      overflow-wrap: anywhere;
-      word-break: break-all;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
     .analysis-section p {
       color: #cbd5e1;
@@ -331,8 +331,8 @@ interface GeneratedTextSection {
       line-height: 1.6;
       max-width: 100%;
       margin: 0 0 10px 0;
-      overflow-wrap: anywhere;
-      word-break: break-all;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
     .analysis-section p:last-child {
       margin-bottom: 0;
@@ -343,9 +343,9 @@ interface GeneratedTextSection {
       line-height: 1.5;
       margin: 0;
       max-width: 100%;
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
       white-space: pre-wrap;
-      word-break: break-all;
+      word-break: normal;
     }
     ul {
       margin: 0;
@@ -382,8 +382,8 @@ interface GeneratedTextSection {
       font-size: 0.9rem;
       margin-bottom: 4px;
       max-width: 100%;
-      overflow-wrap: anywhere;
-      word-break: break-all;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
     .alert-report span {
       color: #fde68a;
@@ -391,8 +391,8 @@ interface GeneratedTextSection {
       font-size: 0.88rem;
       line-height: 1.5;
       max-width: 100%;
-      overflow-wrap: anywhere;
-      word-break: break-all;
+      overflow-wrap: break-word;
+      word-break: normal;
     }
     .missing {
       text-align: center;
@@ -518,31 +518,45 @@ export class FormulaDetailComponent {
 
   public formatAnalysisSections(value: string): GeneratedTextSection[] {
     const formattedText = this.formatGeneratedText(value)
-      .replace(/\b(\d+)\.\s*/g, '\n$1. ')
+      .replace(/(^|[ \t]+)(\d+)\.\s+(?=[A-Z])/gm, '$1\n$2. ')
       .replace(/\b([A-Z][A-Za-z0-9 °°Bx().,/&+-]{4,120}):\s*/g, '\n$1: ')
-      .replace(/\n{2,}/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
     const lines = formattedText
       .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
+      .map((line) => line.trim());
     const sections: GeneratedTextSection[] = [];
+    let startsNewParagraph = false;
 
     for (const line of lines) {
+      if (!line) {
+        startsNewParagraph = true;
+        continue;
+      }
+
       const headingMatch = line.match(/^((?:\d+\.\s*)?[A-Z][^:]{3,140}):\s*(.*)$/);
 
       if (headingMatch) {
         sections.push({
           title: headingMatch[1].trim(),
-          paragraphs: headingMatch[2] ? this.splitIntoParagraphs(headingMatch[2]) : [],
+          paragraphs: headingMatch[2] ? [headingMatch[2].trim()] : [],
         });
+        startsNewParagraph = false;
       } else if (sections.length > 0) {
-        sections[sections.length - 1].paragraphs.push(...this.splitIntoParagraphs(line));
+        const paragraphs = sections[sections.length - 1].paragraphs;
+
+        if (paragraphs.length === 0 || startsNewParagraph) {
+          paragraphs.push(line);
+        } else {
+          paragraphs[paragraphs.length - 1] = `${paragraphs[paragraphs.length - 1]} ${line}`;
+        }
+        startsNewParagraph = false;
       } else {
         sections.push({
           title: 'Formulation Notes',
-          paragraphs: this.splitIntoParagraphs(line),
+          paragraphs: [line],
         });
+        startsNewParagraph = false;
       }
     }
 
@@ -576,6 +590,10 @@ export class FormulaDetailComponent {
       .replace(/\*\*(.*?)\*\*/g, '$1')
       .replace(/\*/g, '')
       .replace(/&/g, ' & ')
+      .replace(/(\d)\.\s+(?=\d)/g, '$1.')
+      .replace(/(\d)\s+%/g, '$1%')
+      .replace(/\(\s+/g, '(')
+      .replace(/\s+\)/g, ')')
       .replace(/([,;:])(?=\S)/g, '$1 ')
       .replace(/([!?])(?=\S)/g, '$1 ')
       .replace(/(^|[^0-9])\.(?=\S)/g, '$1. ')
@@ -587,14 +605,6 @@ export class FormulaDetailComponent {
       .replace(/[ \t]{2,}/g, ' ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
-  }
-
-  private splitIntoParagraphs(value: string): string[] {
-    return value
-      .replace(/([.!?])\s+(?=[A-Z])/g, '$1\n')
-      .split('\n')
-      .map((paragraph) => paragraph.trim())
-      .filter(Boolean);
   }
 
 }

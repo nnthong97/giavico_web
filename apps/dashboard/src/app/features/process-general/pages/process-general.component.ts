@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   inject,
   signal,
 } from '@angular/core';
@@ -9,6 +10,15 @@ import {
   AppLanguage,
   LanguageService,
 } from '../../../core/i18n/language.service';
+import { RndDocumentType } from '../../rnd-documents/models/rnd-document.model';
+import { ProcessRunService } from '../data-access/process-run.service';
+import {
+  ProcessActivityEvent,
+  ProcessDocumentRecord,
+  ProcessRunDetail,
+  ProcessRunSaveRequest,
+} from '../models/process-run.model';
+import { ProcessStepDocumentFormComponent } from '../ui/process-step-document-form.component';
 
 type WorkflowId = 'general' | 'qc-change' | 'product-release';
 type StepStatus = 'pending' | 'active' | 'done' | 'blocked';
@@ -44,6 +54,7 @@ interface ProcessDocument {
   kind: 'PDF' | 'Word' | 'Excel' | 'Email' | 'AI' | 'Record';
   sourcePath?: string;
   simulated?: boolean;
+  templateType?: RndDocumentType;
 }
 
 interface ProcessStep {
@@ -64,12 +75,6 @@ interface ProcessWorkflow {
   subtitle: CopyText;
   summary: CopyText;
   steps: ProcessStep[];
-}
-
-interface TimelineEvent {
-  id: number;
-  title: string;
-  detail: string;
 }
 
 interface EmailExtraction {
@@ -191,6 +196,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/1. 表P-RS1 003-01 03 SAMPLE REPORT - GIAVICO INTERNATIONAL FOOD COMPANY Ltd.pdf',
+    templateType: 'SAMPLE_REPORT',
   },
   {
     id: 'engineering-change-notice',
@@ -202,6 +208,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/2. 表P-RS1 002-05.04工程變更通知單bang thay doi qui trinh va phuong thuc.pdf',
+    templateType: 'ENGINEERING_CHANGE_NOTICE',
   },
   {
     id: 'change-proposal',
@@ -213,6 +220,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/3. 表P-RS1 002-01.07 製程、配方、規格提議更改單bang de xuat thay doi qui trinh phuong thuc va qui cach.pdf',
+    templateType: 'CHANGE_PROPOSAL',
   },
   {
     id: 'engineering-change-request',
@@ -224,6 +232,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/4. 表P-RS1 002-06.01工程變更申請單-新增表單bang de xuat thay doi cong trinh.pdf',
+    templateType: 'ENGINEERING_CHANGE_REQUEST',
   },
   {
     id: 'ecr-extra',
@@ -241,6 +250,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/5. 表P-RS1 003-10.01 半成品允收規格表回收簽收單bang ky nhan va thu hoi bang quy cach nghiem thu BTP.pdf',
+    templateType: 'SEMI_FINISHED_STANDARD_RECEIPT',
   },
   {
     id: 'recall-product-spec',
@@ -252,6 +262,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/6. 表P-RS1 002-04 01〝新產品規格說明單〞回收簽收單.pdf',
+    templateType: 'PRODUCT_SPECIFICATION_RECEIPT',
   },
   {
     id: 'recall-change-notice',
@@ -263,6 +274,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/7. 表P-RS1 002-03.02 產品支撐配方規格更改通知單回收簽單.pdf',
+    templateType: 'PRODUCT_CHANGE_NOTICE_RECEIPT',
   },
   {
     id: 'recall-manufacturing-notice',
@@ -274,6 +286,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/8. 表P-RS1 002-02 02 新產品製作通知單〞回收簽收單~bang ky nhan va thu hoi bag tb che bien sp.pdf',
+    templateType: 'MANUFACTURING_NOTICE_RECEIPT',
   },
   {
     id: 'process-change-notice',
@@ -285,6 +298,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/9. 表P-RS1 002-07.03 產品製程、配方、規格更改通知單.pdf',
+    templateType: 'PRODUCT_CHANGE_NOTIFICATION',
   },
   {
     id: 'manufacturing-notice',
@@ -296,6 +310,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/10. 表P-RS1 001-01.02 新產品製造通知單-Bang thong bao che bien san pham.pdf',
+    templateType: 'MANUFACTURING_NOTICE',
   },
   {
     id: 'product-specification',
@@ -307,6 +322,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/11. 表P-RS1 001-03.02新產品規格說明書.pdf',
+    templateType: 'PRODUCT_SPECIFICATION',
   },
   {
     id: 'finished-acceptance',
@@ -318,6 +334,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/12. 表P-RS1 001-02 02 成品允收規格表 -2025.07.01.pdf',
+    templateType: 'FINISHED_PRODUCT_ACCEPTANCE',
   },
   {
     id: 'semi-finished-acceptance',
@@ -329,6 +346,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/13. 表P-RS1 003-09 03 半成品允收標準表單bang quy cach nghiem thu ban thanh pham.pdf',
+    templateType: 'SEMI_FINISHED_ACCEPTANCE',
   },
   {
     id: 'raw-material-acceptance',
@@ -340,6 +358,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/14. 表P-RS1 003-03 02 原料允收標準表單Bang qui cach nghiem thu nguyen lieu.pdf',
+    templateType: 'RAW_MATERIAL_ACCEPTANCE',
   },
   {
     id: 'product-code-rule-zh',
@@ -373,6 +392,7 @@ const DOCUMENT_LIBRARY: ProcessDocument[] = [
     kind: 'PDF',
     sourcePath:
       '/Users/nguyennhutthong/Downloads/giavico-rnd-forms/17. 表P-RS1 001-06.03協調會-產品確認單~bang xac dinh san pham hop thoa thuan.pdf',
+    templateType: 'PRODUCT_CONFIRMATION',
   },
   {
     id: 'xnqc-1',
@@ -769,6 +789,13 @@ const PROCESS_WORKFLOWS: ProcessWorkflow[] = [
         documents: ['notification-record'],
         actions: [
           action(
+            'complete-general',
+            'release',
+            'Complete process',
+            'Hoàn tất quy trình',
+            '完成流程',
+          ),
+          action(
             'reset-general',
             'reset',
             'Restart simulation',
@@ -1075,6 +1102,13 @@ const PROCESS_WORKFLOWS: ProcessWorkflow[] = [
         tone: 'green',
         documents: ['notification-record'],
         actions: [
+          action(
+            'complete-qc',
+            'release',
+            'Complete process',
+            'Hoàn tất quy trình',
+            '完成流程',
+          ),
           action(
             'reset-qc',
             'reset',
@@ -1423,7 +1457,7 @@ const PROCESS_WORKFLOWS: ProcessWorkflow[] = [
 @Component({
   selector: 'app-process-general',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ProcessStepDocumentFormComponent],
   template: `
     <section class="process-page">
       <header class="process-heading">
@@ -1481,6 +1515,11 @@ const PROCESS_WORKFLOWS: ProcessWorkflow[] = [
           }}</span>
           <strong>{{ text(currentWorkflow().title) }}</strong>
           <p>{{ text(currentWorkflow().summary) }}</p>
+          <small class="run-state" *ngIf="processRun() as run">
+            {{ copy('Saved run', 'Lần chạy đã lưu', '已儲存流程') }}: {{ run.uuid }} · {{ run.status }}
+          </small>
+          <small class="run-state saving" *ngIf="savingProcess()">{{ copy('Saving process…', 'Đang lưu quy trình…', '正在儲存流程…') }}</small>
+          <small class="run-state error" *ngIf="processError()">{{ processError() }}</small>
         </div>
         <div class="progress-box">
           <span>{{ copy('Progress', 'Tiến độ', '進度') }}</span>
@@ -1576,25 +1615,18 @@ const PROCESS_WORKFLOWS: ProcessWorkflow[] = [
             <h4>
               {{ copy('Related documents', 'Tài liệu liên quan', '相關文件') }}
             </h4>
-            <article *ngFor="let doc of documentsFor(step)">
-              <span class="doc-kind">{{ doc.kind }}</span>
-              <div>
-                <strong>{{ text(doc.name) }}</strong>
-                <small *ngIf="doc.sourcePath; else simulatedDoc">{{
-                  copy('Provided file', 'File đã cung cấp', '已提供文件')
-                }}</small>
-                <ng-template #simulatedDoc>
-                  <small>{{
-                    copy(
-                      'Simulated until integration',
-                      'Mô phỏng đến khi tích hợp',
-                      '整合前模擬'
-                    )
-                  }}</small>
-                </ng-template>
-                <code *ngIf="doc.sourcePath">{{ doc.sourcePath }}</code>
-              </div>
-            </article>
+            <app-process-step-document-form
+              *ngFor="let doc of documentsFor(step)"
+              [documentId]="doc.id"
+              [displayName]="text(doc.name)"
+              [kind]="doc.kind"
+              [templateType]="doc.templateType"
+              [record]="documentRecord(doc.id)"
+              [defaultProductName]="processProductName()"
+              [defaultMarket]="processMarket()"
+              [defaultOwner]="text(step.role)"
+              (recordSaved)="saveDocumentRecord(step.id, $event)"
+            />
           </div>
         </section>
 
@@ -1837,6 +1869,19 @@ const PROCESS_WORKFLOWS: ProcessWorkflow[] = [
         line-height: 1.45;
         margin: 6px 0 0;
       }
+      .run-state {
+        color: #64748b;
+        display: block;
+        font-size: 0.68rem;
+        margin-top: 9px;
+        overflow-wrap: anywhere;
+      }
+      .run-state.saving {
+        color: #1766c2;
+      }
+      .run-state.error {
+        color: #b42318;
+      }
       .progress-box strong {
         font-size: 1.55rem;
       }
@@ -2074,6 +2119,10 @@ const PROCESS_WORKFLOWS: ProcessWorkflow[] = [
         font-size: 0.9rem;
         margin-bottom: 10px;
       }
+      .document-list app-process-step-document-form {
+        display: block;
+        margin-bottom: 9px;
+      }
       .document-list article {
         align-items: flex-start;
         background: #fbfdff;
@@ -2281,8 +2330,10 @@ const PROCESS_WORKFLOWS: ProcessWorkflow[] = [
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProcessGeneralComponent {
+export class ProcessGeneralComponent implements OnInit {
   private readonly language = inject(LanguageService);
+  private readonly processRuns = inject(ProcessRunService);
+  private pendingPersist: 'save' | 'complete' | null = null;
 
   readonly workflows = PROCESS_WORKFLOWS;
   readonly activeWorkflowId = signal<WorkflowId>('general');
@@ -2292,7 +2343,12 @@ export class ProcessGeneralComponent {
   );
   readonly emailExtraction = signal<EmailExtraction | null>(null);
   readonly formulaSimulation = signal<FormulaSimulation | null>(null);
-  readonly eventLog = signal<TimelineEvent[]>([
+  readonly processRun = signal<ProcessRunDetail | null>(null);
+  readonly stepData = signal<Record<string, Record<string, unknown>>>({});
+  readonly documentRecords = signal<Record<string, ProcessDocumentRecord>>({});
+  readonly savingProcess = signal(false);
+  readonly processError = signal('');
+  readonly eventLog = signal<ProcessActivityEvent[]>([
     {
       id: 1,
       title: this.copy(
@@ -2305,8 +2361,13 @@ export class ProcessGeneralComponent {
         'Chọn bước hoặc chạy thao tác để bắt đầu.',
         '選擇步驟或執行動作以開始。',
       ),
+      createdAt: new Date().toISOString(),
     },
   ]);
+
+  ngOnInit(): void {
+    this.loadWorkflow(this.currentWorkflow());
+  }
 
   copy(en: string, vi: string, zh: string): string {
     const current: AppLanguage = this.language.language();
@@ -2337,25 +2398,12 @@ export class ProcessGeneralComponent {
     const workflow =
       this.workflows.find((item) => item.id === id) ?? this.workflows[0];
     this.activeWorkflowId.set(workflow.id);
-    this.selectedStepId.set(workflow.steps[0].id);
-    this.stepStatuses.set(this.createInitialStatuses(workflow));
-    this.emailExtraction.set(null);
-    this.formulaSimulation.set(null);
-    this.eventLog.set([
-      {
-        id: Date.now(),
-        title: this.text(workflow.title),
-        detail: this.copy(
-          'Workflow selected and reset.',
-          'Đã chọn và đặt lại lưu trình.',
-          '已選擇並重設流程。',
-        ),
-      },
-    ]);
+    this.loadWorkflow(workflow);
   }
 
   selectStep(id: string): void {
     this.selectedStepId.set(id);
+    this.persistCurrentRun(false);
   }
 
   statusFor(stepId: string): StepStatus {
@@ -2386,6 +2434,41 @@ export class ProcessGeneralComponent {
       .filter((document): document is ProcessDocument => Boolean(document));
   }
 
+  documentRecord(documentId: string): ProcessDocumentRecord | undefined {
+    return this.documentRecords()[documentId];
+  }
+
+  processProductName(): string {
+    return this.emailExtraction()?.product
+      ?? Object.values(this.documentRecords())[0]?.productName
+      ?? 'Yuzu Black Tea';
+  }
+
+  processMarket(): string {
+    return this.emailExtraction()?.market
+      ?? Object.values(this.documentRecords())[0]?.market
+      ?? 'APAC - Japan';
+  }
+
+  saveDocumentRecord(stepId: string, record: ProcessDocumentRecord): void {
+    this.documentRecords.update((records) => ({ ...records, [record.documentId]: record }));
+    this.stepData.update((data) => ({
+      ...data,
+      [stepId]: {
+        ...(data[stepId] ?? {}),
+        updatedAt: record.updatedAt,
+        documentIds: this.documentsFor(
+          this.currentWorkflow().steps.find((step) => step.id === stepId) ?? this.selectedStep()
+        ).map((document) => document.id),
+      },
+    }));
+    this.addEvent(
+      this.copy('Document saved', 'Đã lưu tài liệu', '文件已儲存'),
+      record.documentNumber ? `${record.documentNumber} · ${record.title}` : record.title,
+    );
+    this.persistCurrentRun(false);
+  }
+
   completedCount(): number {
     return this.currentWorkflow().steps.filter(
       (step) => this.statusFor(step.id) === 'done',
@@ -2406,7 +2489,7 @@ export class ProcessGeneralComponent {
   }
 
   resetCurrentWorkflow(): void {
-    this.selectWorkflow(this.currentWorkflow().id);
+    this.startNewRun(this.currentWorkflow());
   }
 
   runCurrentWorkflow(): void {
@@ -2415,7 +2498,7 @@ export class ProcessGeneralComponent {
         (stepAction) => stepAction.kind !== 'reset',
       );
       if (primaryAction) {
-        this.runAction(step, primaryAction, false);
+        this.runAction(step, primaryAction, false, false);
       } else {
         this.patchStatus(step.id, 'done');
       }
@@ -2424,9 +2507,15 @@ export class ProcessGeneralComponent {
     if (finalStep) {
       this.selectedStepId.set(finalStep.id);
     }
+    this.persistCurrentRun(this.allStepsDone());
   }
 
-  runAction(step: ProcessStep, item: ProcessAction, selectNext = true): void {
+  runAction(
+    step: ProcessStep,
+    item: ProcessAction,
+    selectNext = true,
+    persist = true,
+  ): void {
     if (item.kind === 'reset') {
       this.resetCurrentWorkflow();
       return;
@@ -2442,6 +2531,7 @@ export class ProcessGeneralComponent {
           '此模擬中的訂單已取消。',
         ),
       );
+      if (persist) this.persistCurrentRun(false);
       return;
     }
 
@@ -2468,6 +2558,7 @@ export class ProcessGeneralComponent {
           '流程已返回最相關的配方/報告步驟。',
         ),
       );
+      if (persist) this.persistCurrentRun(false);
       return;
     }
 
@@ -2509,6 +2600,7 @@ export class ProcessGeneralComponent {
       if (selectNext) {
         this.selectedStepId.set(next.id);
       }
+      if (persist) this.persistCurrentRun(false);
       return;
     }
 
@@ -2522,6 +2614,7 @@ export class ProcessGeneralComponent {
         ),
       );
     }
+    if (persist) this.persistCurrentRun(this.allStepsDone());
   }
 
   private createInitialStatuses(
@@ -2538,6 +2631,119 @@ export class ProcessGeneralComponent {
 
   private patchStatus(stepId: string, status: StepStatus): void {
     this.stepStatuses.update((statuses) => ({ ...statuses, [stepId]: status }));
+  }
+
+  private loadWorkflow(workflow: ProcessWorkflow): void {
+    this.prepareNewRunState(workflow);
+    this.processRuns.latestOpen(workflow.id).subscribe({
+      next: (run) => {
+        if (this.activeWorkflowId() === workflow.id) this.restoreRun(workflow, run);
+      },
+      error: () => {
+        if (this.activeWorkflowId() === workflow.id) this.startNewRun(workflow);
+      },
+    });
+  }
+
+  private startNewRun(workflow: ProcessWorkflow): void {
+    this.prepareNewRunState(workflow);
+    this.addEvent(
+      this.copy('New process started', 'Đã bắt đầu quy trình mới', '新流程已開始'),
+      this.text(workflow.title),
+    );
+    this.persistCurrentRun(false);
+  }
+
+  private prepareNewRunState(workflow: ProcessWorkflow): void {
+    this.processRun.set(null);
+    this.selectedStepId.set(workflow.steps[0].id);
+    this.stepStatuses.set(this.createInitialStatuses(workflow));
+    this.stepData.set({});
+    this.documentRecords.set({});
+    this.emailExtraction.set(null);
+    this.formulaSimulation.set(null);
+    this.processError.set('');
+    this.eventLog.set([]);
+  }
+
+  private restoreRun(workflow: ProcessWorkflow, run: ProcessRunDetail): void {
+    const validStepIds = new Set(workflow.steps.map((step) => step.id));
+    const savedStatuses = Object.fromEntries(
+      Object.entries(run.stepStatuses).filter(([stepId]) => validStepIds.has(stepId))
+    );
+    const simulation = run.stepData['_simulation'] ?? {};
+    this.processRun.set(run);
+    this.selectedStepId.set(validStepIds.has(run.currentStepId) ? run.currentStepId : workflow.steps[0].id);
+    this.stepStatuses.set({ ...this.createInitialStatuses(workflow), ...savedStatuses });
+    this.stepData.set({ ...run.stepData });
+    this.documentRecords.set({ ...run.documentRecords });
+    this.eventLog.set(run.activityLog ?? []);
+    this.emailExtraction.set((simulation['emailExtraction'] as EmailExtraction | null | undefined) ?? null);
+    this.formulaSimulation.set((simulation['formulaSimulation'] as FormulaSimulation | null | undefined) ?? null);
+  }
+
+  private persistCurrentRun(complete: boolean): void {
+    if (this.savingProcess()) {
+      this.pendingPersist = complete ? 'complete' : (this.pendingPersist ?? 'save');
+      return;
+    }
+    const request = this.processRunRequest();
+    const current = this.processRun();
+    const operation = current
+      ? complete
+        ? this.processRuns.complete(current.uuid, request)
+        : this.processRuns.update(current.uuid, request)
+      : this.processRuns.create(request);
+    this.savingProcess.set(true);
+    this.processError.set('');
+    operation.subscribe({
+      next: (run) => {
+        if (this.activeWorkflowId() === request.workflowId) this.processRun.set(run);
+      },
+      error: (error) => {
+        const response = error as { error?: { message?: string }; message?: string };
+        this.processError.set(
+          response?.error?.message ?? response?.message ?? this.copy(
+            'Unable to save process state.',
+            'Không thể lưu trạng thái quy trình.',
+            '無法儲存流程狀態。',
+          )
+        );
+        this.finishPersist();
+      },
+      complete: () => this.finishPersist(),
+    });
+  }
+
+  private finishPersist(): void {
+    this.savingProcess.set(false);
+    const pending = this.pendingPersist;
+    this.pendingPersist = null;
+    if (pending) this.persistCurrentRun(pending === 'complete');
+  }
+
+  private processRunRequest(): ProcessRunSaveRequest {
+    return {
+      workflowId: this.currentWorkflow().id,
+      title: this.text(this.currentWorkflow().title),
+      owner: 'R&D User',
+      currentStepId: this.selectedStepId(),
+      status: Object.values(this.stepStatuses()).includes('blocked') ? 'BLOCKED' : 'ACTIVE',
+      stepStatuses: { ...this.stepStatuses() },
+      stepData: {
+        ...this.stepData(),
+        _simulation: {
+          emailExtraction: this.emailExtraction(),
+          formulaSimulation: this.formulaSimulation(),
+        },
+      },
+      documentRecords: { ...this.documentRecords() },
+      activityLog: [...this.eventLog()],
+    };
+  }
+
+  private allStepsDone(): boolean {
+    return this.currentWorkflow().steps.every((step) => this.statusFor(step.id) === 'done');
   }
 
   private nextStep(stepId: string): ProcessStep | undefined {
@@ -2557,9 +2763,9 @@ export class ProcessGeneralComponent {
 
   private addEvent(title: string, detail: string): void {
     this.eventLog.update((events) =>
-      [{ id: Date.now() + events.length, title, detail }, ...events].slice(
+      [{ id: Date.now() + events.length, title, detail, createdAt: new Date().toISOString() }, ...events].slice(
         0,
-        12,
+        50,
       ),
     );
   }
