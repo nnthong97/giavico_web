@@ -99,10 +99,10 @@ export class FormulationEffects {
 
   private toErrorMessage(error: any): string {
     if (error.name === 'TimeoutError') {
-      return 'AI request timed out (limit: 45 seconds). Check the Giavico API logs or increase the service timeout.';
+      return 'AI request timed out after 45 seconds. Check the Vercel function logs and Gemini status.';
     }
     if (error?.status === 0) {
-      return 'Cannot connect to Giavico API. Ensure the monolith is running at http://localhost:8080 and CORS allows this app origin.';
+      return 'Cannot connect to the Gemini API route. Verify the Vercel deployment includes /api/gemini.';
     }
     if (error instanceof HttpErrorResponse && error.error?.message) {
       const fieldErrors = error.error.fieldErrors

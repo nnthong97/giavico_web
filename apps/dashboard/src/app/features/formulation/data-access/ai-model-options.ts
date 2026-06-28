@@ -1,16 +1,19 @@
-import { AiModelOption, AiModelSelection, AiModelUseCase } from '../models/formulation.model';
+import {
+  AiModelOption,
+  AiModelSelection,
+  AiModelUseCase,
+} from '../models/formulation.model';
 
 export const DEFAULT_CHAT_AI_MODEL = 'gemini-3.5-flash';
 export const DEFAULT_FORMULA_AI_MODEL = 'gemini-3.1-flash-lite';
-export const DEMO_GEMINI_API_KEY_STORAGE_KEY = 'giavico_demo_gemini_api_key';
-export const DEFAULT_DEMO_GEMINI_API_KEY = 'AIzaSyDX3RcJAPHsivcZLye3plBgkrFS08cjz2s';
 
 export const GEMINI_AI_MODEL_OPTIONS: AiModelOption[] = [
   {
     provider: 'gemini',
     model: 'gemini-3.5-flash',
     label: 'Gemini 3.5 Flash',
-    description: 'Balanced chat quality for formulation support and troubleshooting.',
+    description:
+      'Balanced chat quality for formulation support and troubleshooting.',
     recommendedFor: ['chat', 'formula'],
   },
   {
@@ -29,7 +32,10 @@ export const GEMINI_AI_MODEL_OPTIONS: AiModelOption[] = [
   },
 ];
 
-export function chooseGeminiModel(useCase: AiModelUseCase, requestedModel?: string): AiModelSelection {
+export function chooseGeminiModel(
+  useCase: AiModelUseCase,
+  requestedModel?: string,
+): AiModelSelection {
   const normalizedModel = requestedModel?.trim();
   const requestedOption = normalizedModel
     ? GEMINI_AI_MODEL_OPTIONS.find((option) => option.model === normalizedModel)
@@ -44,6 +50,7 @@ export function chooseGeminiModel(useCase: AiModelUseCase, requestedModel?: stri
 
   return {
     provider: 'gemini',
-    model: useCase === 'chat' ? DEFAULT_CHAT_AI_MODEL : DEFAULT_FORMULA_AI_MODEL,
+    model:
+      useCase === 'chat' ? DEFAULT_CHAT_AI_MODEL : DEFAULT_FORMULA_AI_MODEL,
   };
 }
