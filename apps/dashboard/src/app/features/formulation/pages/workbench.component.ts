@@ -22,9 +22,7 @@ import { RndDocumentListComponent } from '../../rnd-documents/pages/rnd-document
 import { OllamaFormulationService } from '../data-access/ollama-formulation.service';
 import {
   DEFAULT_CHAT_AI_MODEL,
-  DEFAULT_DEMO_GEMINI_API_KEY,
   DEFAULT_FORMULA_AI_MODEL,
-  DEMO_GEMINI_API_KEY_STORAGE_KEY,
   GEMINI_AI_MODEL_OPTIONS,
 } from '../data-access/ai-model-options';
 import { AppLanguage, LanguageService } from '../../../core/i18n/language.service';
@@ -492,20 +490,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
                 </section>
 
                 <section class="account-box">
-                  <h3>Gemini API key setup</h3>
-                  <label for="demoGeminiApiKey">Direct Angular demo key</label>
-                  <input
-                    id="demoGeminiApiKey"
-                    type="password"
-                    [value]="demoGeminiApiKey()"
-                    (input)="demoGeminiApiKey.set($any($event.target).value)"
-                    placeholder="Paste a Gemini API key for local demo mode"
-                  />
-                  <div class="account-actions-inline">
-                    <button type="button" class="btn-small primary" (click)="saveDemoGeminiApiKey()">Use this key</button>
-                    <button type="button" class="btn-small" (click)="resetDemoGeminiApiKey()">Reset demo key</button>
-                  </div>
-                  <p class="account-note">{{ demoGeminiKeyMessage() }}</p>
+                  <h3>Gemini server connection</h3>
                   <div class="status-row">
                     <span>Status</span>
                     <strong [class.ready]="openAiKeyStatus()?.configured" [class.missing]="openAiKeyStatus() && !openAiKeyStatus()?.configured">
@@ -521,7 +506,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
                     <strong>{{ openAiKeyStatus()?.model || 'Not loaded' }}</strong>
                   </div>
                   <p class="account-note">
-                    Create or view your key in Google AI Studio, then restart the chat/formula microservices with <code>GEMINI_API_KEY</code> set.
+                    Add <code>GEMINI_API_KEY</code> in the Vercel project environment variables, then redeploy. The key stays in the server function and is never sent to the browser.
                   </p>
                   <a class="account-link" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">
                     Open Google AI Studio API keys
@@ -1927,8 +1912,6 @@ export class FormulatorWorkbenchComponent implements OnInit {
   public readonly googleClientId = signal('');
   public readonly googleProfile = signal<GoogleAccountProfile | null>(null);
   public readonly googleLoginMessage = signal('Google login identifies the user. Gemini requests still use the backend key.');
-  public readonly demoGeminiApiKey = signal(DEFAULT_DEMO_GEMINI_API_KEY);
-  public readonly demoGeminiKeyMessage = signal('Direct Angular demo mode is enabled. Replace this key here if needed.');
   public readonly openAiKeyStatus = signal<OpenAiKeyStatus | null>(null);
   private readonly generatedInput = this.store.selectSignal(selectFormulationInput);
 
@@ -1948,7 +1931,6 @@ export class FormulatorWorkbenchComponent implements OnInit {
     this.store.dispatch(FormulationActions.loadSavedFormulas());
     this.loadChatHistory();
     this.restoreGoogleAccount();
-    this.restoreDemoGeminiApiKey();
     this.loadOpenAiKeyStatus();
   }
 
@@ -2187,27 +2169,6 @@ export class FormulatorWorkbenchComponent implements OnInit {
     });
   }
 
-  public saveDemoGeminiApiKey(): void {
-    const apiKey = this.demoGeminiApiKey().trim();
-
-    if (!apiKey) {
-      this.demoGeminiKeyMessage.set('Enter a Gemini API key before enabling direct demo mode.');
-      return;
-    }
-
-    localStorage.setItem(DEMO_GEMINI_API_KEY_STORAGE_KEY, apiKey);
-    this.demoGeminiApiKey.set(apiKey);
-    this.demoGeminiKeyMessage.set('Direct Angular demo mode is enabled with the saved browser key.');
-    this.loadOpenAiKeyStatus();
-  }
-
-  public resetDemoGeminiApiKey(): void {
-    localStorage.removeItem(DEMO_GEMINI_API_KEY_STORAGE_KEY);
-    this.demoGeminiApiKey.set(DEFAULT_DEMO_GEMINI_API_KEY);
-    this.demoGeminiKeyMessage.set('Direct Angular demo mode is using the built-in temporary demo key.');
-    this.loadOpenAiKeyStatus();
-  }
-
   public getFormulaSummary(formula: BeverageFormula): string {
     const ingredientNames = formula.ingredients
       .slice(0, 3)
@@ -2382,15 +2343,6 @@ export class FormulatorWorkbenchComponent implements OnInit {
         this.chatMessages.set(DEFAULT_CHAT_MESSAGES);
       },
     });
-  }
-
-  private restoreDemoGeminiApiKey(): void {
-    const apiKey = localStorage.getItem(DEMO_GEMINI_API_KEY_STORAGE_KEY)?.trim();
-
-    if (apiKey) {
-      this.demoGeminiApiKey.set(apiKey);
-      this.demoGeminiKeyMessage.set('Direct Angular demo mode is using the saved browser key.');
-    }
   }
 
   private restoreGoogleAccount(): void {
