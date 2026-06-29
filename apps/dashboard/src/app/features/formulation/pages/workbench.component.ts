@@ -213,6 +213,23 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
         <section class="form-panel card">
           <h2>{{ t('targetMatrix') }}</h2>
           <form [formGroup]="form" (ngSubmit)="onGenerate()">
+            <div class="demo-api-key">
+              <label for="sessionGeminiApiKey">Gemini API key (demo session)</label>
+              <div class="demo-api-key-row">
+                <input
+                  id="sessionGeminiApiKey"
+                  type="password"
+                  autocomplete="off"
+                  spellcheck="false"
+                  [value]="sessionGeminiApiKey()"
+                  (input)="setSessionGeminiApiKey($any($event.target).value)"
+                  placeholder="Paste an AQ. or AIza Gemini API key"
+                />
+                <button type="button" class="btn-small" (click)="clearSessionGeminiApiKey()">Clear</button>
+              </div>
+              <p>Optional. Kept only in memory and cleared when this page reloads.</p>
+            </div>
+
             <div class="model-picker">
               <label for="formulaModel">Formula model</label>
               <select id="formulaModel" [value]="formulaModel()" (change)="chooseFormulaModel($any($event.target).value)">
@@ -939,6 +956,40 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
       margin-bottom: 18px;
       padding: 14px;
     }
+    .demo-api-key {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .demo-api-key label {
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .demo-api-key-row {
+      display: grid;
+      gap: 8px;
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .demo-api-key input {
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      color: #f8fafc;
+      font: inherit;
+      min-width: 0;
+      padding: 10px 12px;
+      width: 100%;
+    }
+    .demo-api-key-row .btn-small {
+      min-width: 64px;
+    }
+    .demo-api-key p {
+      color: #94a3b8;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      margin: 0;
+    }
     .chat-model-picker {
       margin-bottom: 16px;
     }
@@ -1581,6 +1632,7 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     :host-context(.light-theme) .account-box,
     :host-context(.light-theme) input[type="text"],
     :host-context(.light-theme) input[type="number"],
+    :host-context(.light-theme) input[type="password"],
     :host-context(.light-theme) .account-box input,
     :host-context(.light-theme) textarea {
       background: #ffffff;
@@ -1620,6 +1672,8 @@ const DEFAULT_CHAT_MESSAGES: ChatMessage[] = [
     :host-context(.light-theme) .account-profile span,
     :host-context(.light-theme) .model-picker label,
     :host-context(.light-theme) .model-picker p,
+    :host-context(.light-theme) .demo-api-key label,
+    :host-context(.light-theme) .demo-api-key p,
     :host-context(.light-theme) .status-row span {
       color: #64748b;
     }
@@ -1902,6 +1956,7 @@ export class FormulatorWorkbenchComponent implements OnInit {
   public readonly chatMessages = signal<ChatMessage[]>(DEFAULT_CHAT_MESSAGES);
   public readonly formulaModel = signal(DEFAULT_FORMULA_AI_MODEL);
   public readonly chatModel = signal(DEFAULT_CHAT_AI_MODEL);
+  public readonly sessionGeminiApiKey = signal('');
   public readonly formulaModelOptions = GEMINI_AI_MODEL_OPTIONS.filter((option) =>
     option.recommendedFor.includes('formula')
   );
@@ -2020,6 +2075,15 @@ export class FormulatorWorkbenchComponent implements OnInit {
 
   public chooseChatModel(model: string): void {
     this.chatModel.set(this.normalizeSelectedModel(model, DEFAULT_CHAT_AI_MODEL));
+  }
+
+  public setSessionGeminiApiKey(apiKey: string): void {
+    this.sessionGeminiApiKey.set(apiKey);
+    this.ollamaService.setSessionGeminiApiKey(apiKey);
+  }
+
+  public clearSessionGeminiApiKey(): void {
+    this.setSessionGeminiApiKey('');
   }
 
   public getSelectedModelDescription(model: string): string {
