@@ -25,7 +25,7 @@ interface GeneratedTextSection {
           <label class="language-select">
             <span>{{ t('language') }}</span>
             <select [value]="languageService.language()" (change)="setLanguage($any($event.target).value)">
-              <option value="en">EN</option>
+              <option value="en">EN 1</option>
               <option value="vi">VI</option>
               <option value="zh-TW">繁中</option>
             </select>
