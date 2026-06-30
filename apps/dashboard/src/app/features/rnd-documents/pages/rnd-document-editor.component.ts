@@ -174,6 +174,7 @@ export class RndDocumentEditorComponent implements OnInit, OnDestroy {
       general: { en: 'General information', vi: 'Thông tin chung', zhTw: '一般資訊' },
       specification: { en: 'Specifications', vi: 'Quy cách', zhTw: '規格' },
       process: { en: 'Process details', vi: 'Chi tiết quy trình', zhTw: '製程詳情' },
+      shipping: { en: 'Shipping', vi: 'Vận chuyển', zhTw: '寄送' },
       approval: { en: 'Approval', vi: 'Phê duyệt', zhTw: '核准' },
       tracking: { en: 'Tracking', vi: 'Theo dõi', zhTw: '追蹤' },
     };

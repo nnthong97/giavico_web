@@ -27,6 +27,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 
         <nav class="ph-nav" role="tablist">
           <a routerLink="dashboard"  routerLinkActive="active" class="ph-tab">📊 {{ t('navDashboard') }}</a>
+          <a routerLink="management" routerLinkActive="active" class="ph-tab">PM {{ t('navManagement') }}</a>
           <a routerLink="orders"     routerLinkActive="active" class="ph-tab">📋 {{ t('navOrders') }}</a>
           <a routerLink="schedule"   routerLinkActive="active" class="ph-tab">📅 {{ t('navSchedule') }}</a>
           <a routerLink="inventory"  routerLinkActive="active" class="ph-tab">📦 {{ t('navInventory') }}</a>

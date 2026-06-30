@@ -28,6 +28,10 @@ export const appRoutes: Route[] = [
         loadComponent: () => import('./features/planning/pages/planning-dashboard.component').then(m => m.PlanningDashboardComponent),
       },
       {
+        path: 'management',
+        loadComponent: () => import('./features/planning/pages/planning-management.component').then(m => m.PlanningManagementComponent),
+      },
+      {
         path: 'orders',
         loadComponent: () => import('./features/planning/pages/planning-orders.component').then(m => m.PlanningOrdersComponent),
       },
